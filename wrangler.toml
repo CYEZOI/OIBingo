@@ -1,0 +1,12 @@
+name = "oi-bingo"
+main = "Source/index.ts"
+compatibility_date = "2023-12-06"
+env = { }
+rules = [
+  { type = "Data", globs = ["./HTML/*.*"], fallthrough = false }
+]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "oi-bingo"
+database_id = "6fa63161-e18b-4386-bba6-983733aa9b88"
