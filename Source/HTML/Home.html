@@ -1,1 +1,17 @@
-<div id="Bingo"></div>
+<button class="AdminOnly btn btn-danger mb-2" id="RefreshProblemList">Refresh problem list</button>
+<div class="AdminOnly input-group mb-3">
+    <input type="text" class="form-control" placeholder="Bingo name" id="CreateBingoName">
+    <select class="form-select" multiple id="CreateBingoDifficulties" data-bs-toggle="tooltip" data-bs-placement="top"
+        data-bs-title="You can select multiple difficulties by holding Ctrl">>
+        <option value="0">暂无评定</option>
+        <option value="1">入门</option>
+        <option value="2">普及−</option>
+        <option value="3">普及/提高−</option>
+        <option value="4">普及+/提高</option>
+        <option value="5" selected>提高+/省选−</option>
+        <option value="6">省选/NOI−</option>
+        <option value="7">NOI/NOI+/CTSC</option>
+    </select>
+    <button class="btn btn-outline-primary" id="CreateBingoButton">Create a new Bingo</button>
+</div>
+<div id="BingoArea"></div>

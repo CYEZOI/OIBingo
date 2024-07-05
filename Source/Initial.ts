@@ -12,13 +12,24 @@ export class Initial {
             new DatabaseColumn({ "Name": "LuoguUsername", "Type": "TEXT" }),
             new DatabaseColumn({ "Name": "LuoguPassword", "Type": "TEXT" }),
             new DatabaseColumn({ "Name": "LuoguClientID", "Type": "TEXT" }),
-            new DatabaseColumn({ "Name": "LastLoginTime", "Type": "DATETIME", "NotNull": true, "DefaultValue": "CURRENT_TIMESTAMP" }),
+            new DatabaseColumn({ "Name": "LastOnlineTime", "Type": "DATETIME", "NotNull": true }),
             new DatabaseColumn({ "Name": "Permission", "Type": "INTEGER", "NotNull": true, "DefaultValue": "0" }),
         ],
         Tokens: [
             new DatabaseColumn({ "Name": "TokenValue", "Type": "TEXT", "NotNull": true, "PrimaryKey": true }),
             new DatabaseColumn({ "Name": "Username", "Type": "TEXT", "NotNull": true }),
-            new DatabaseColumn({ "Name": "CreateTime", "Type": "DATETIME", "NotNull": true, "DefaultValue": "CURRENT_TIMESTAMP" }),
+            new DatabaseColumn({ "Name": "CreateTime", "Type": "DATETIME", "NotNull": true }),
+        ],
+        Bingos: [
+            new DatabaseColumn({ "Name": "BingoName", "Type": "TEXT", "NotNull": true, "PrimaryKey": true }),
+            new DatabaseColumn({ "Name": "BingoData", "Type": "TEXT", "NotNull": true }),
+            new DatabaseColumn({ "Name": "CreateTime", "Type": "DATETIME", "NotNull": true }),
+        ],
+        LuoguProblems: [
+            new DatabaseColumn({ "Name": "PID", "Type": "TEXT", "NotNull": true, "PrimaryKey": true }),
+            new DatabaseColumn({ "Name": "Title", "Type": "TEXT", "NotNull": true }),
+            new DatabaseColumn({ "Name": "PassRate", "Type": "FLOAT", "NotNull": true }),
+            new DatabaseColumn({ "Name": "Difficulty", "Type": "INTEGER", "NotNull": true }),
         ],
     }
     constructor(DB: Database) {

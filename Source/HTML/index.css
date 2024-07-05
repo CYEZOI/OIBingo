@@ -1,0 +1,8 @@
+.BlurDefault {
+    filter: blur(5px);
+    transition: 0.5s;
+}
+
+.BlurDefault:focus {
+    filter: blur(0px);
+}

@@ -1,25 +1,24 @@
 <div class="row g-2 align-items-center mb-2">
     <div class="col-4">
-        <input id="OriginalPassword" type="password" class="form-control" placeholder="Original password">
-    </div>
-    <div class="col-1">
-        <button id="HashPassword" class="btn btn-success">Hash</button>
+        <input id="AddUserUsername" type="username" class="form-control" placeholder="Username">
     </div>
     <div class="col-4">
-        <span id="HashedPassword"></span>
+        <input id="AddUserPassword" type="password" class="form-control" placeholder="Password">
+    </div>
+    <div class="col-4">
+        <button class="btn btn-primary" id="AddUserButton">Add user</button>
     </div>
 </div>
-<button class="btn btn-primary mb-2" id="UsersAddUserButton">Add user</button>
 <table class="table table-hover" id="UsersData">
     <thead>
         <tr>
-            <th class="col-2">Username</th>
-            <th class="col-2">Password</th>
+            <th class="col-1">Username</th>
+            <th class="col-1">Password</th>
             <th class="col-2">Luogu username</th>
             <th class="col-2">Luogu password</th>
-            <th class="col-2">Last login</th>
-            <th class="col-2">Permission</th>
-            <th class="col-1">Action</th>
+            <th class="col-3">Last online time</th>
+            <th class="col-1">Permission</th>
+            <th class="col-2">Action</th>
         </tr>
     </thead>
     <tbody></tbody>

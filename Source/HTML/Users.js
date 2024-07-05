@@ -1,7 +1,6 @@
-const OriginalPassword = document.getElementById("OriginalPassword");
-const HashPassword = document.getElementById("HashPassword");
-const HashedPassword = document.getElementById("HashedPassword");
-const UsersAddUserButton = document.getElementById("UsersAddUserButton");
+const AddUserUsername = document.getElementById("AddUserUsername");
+const AddUserPassword = document.getElementById("AddUserPassword");
+const AddUserButton = document.getElementById("AddUserButton");
 const UsersData = document.getElementById("UsersData");
 CheckTokenAvailable();
 for (let i = 0; i < 10; i++) {
@@ -13,52 +12,63 @@ for (let i = 0; i < 10; i++) {
         }
     }
 }
-UsersAddUserButton.onclick = () => {
-    SwitchPage("AddUser");
-};
+AddUserButton.addEventListener("click", () => {
+    AddLoading(AddUserButton);
+    RequestAPI("AddUser", { Username: String(AddUserUsername.value), Password: String(AddUserPassword.value), }, () => {
+        RemoveLoading(AddUserButton);
+    }, () => {
+        ShowSuccess("Add user success");
+        setTimeout(() => { window.location.reload(); }, 1000);
+    }, () => { }, () => { });
+});
 RequestAPI("GetUsers", {}, () => { }, (Response) => {
     UsersData.children[1].innerHTML = "";
-    for (let i = 0; i < Response.Users.length; i++) {
+    for (let i = 0; i < Response.UserInfo.length; i++) {
         let DataRow = document.createElement("tr"); UsersData.children[1].appendChild(DataRow);
         {
-            let DataRowUsernameInput, DataRowNicknameInput, DataRowEmailAddressInput, DataRowPasswordInput, DataRowRoleSelect;
-            let DataRowUID = document.createElement("td"); DataRow.appendChild(DataRowUID);
-            {
-                let DataRowUIDSpan = document.createElement("span"); DataRowUID.appendChild(DataRowUIDSpan);
-                DataRowUIDSpan.innerText = Response.Users[i].UID;
-            }
+            let DataRowPasswordInput, DataRowLuoguUsernameInput, DataRowLuoguPasswordInput, DataRowPermissionCheck;
             let DataRowUsername = document.createElement("td"); DataRow.appendChild(DataRowUsername);
             {
-                DataRowUsernameInput = document.createElement("input"); DataRowUsername.appendChild(DataRowUsernameInput);
-                DataRowUsernameInput.type = "text";
-                DataRowUsernameInput.classList.add("form-control");
-                DataRowUsernameInput.value = Response.Users[i].Username;
-            }
-            let DataRowNickname = document.createElement("td"); DataRow.appendChild(DataRowNickname);
-            {
-                DataRowNicknameInput = document.createElement("input"); DataRowNickname.appendChild(DataRowNicknameInput);
-                DataRowNicknameInput.type = "text";
-                DataRowNicknameInput.classList.add("form-control");
-                DataRowNicknameInput.value = Response.Users[i].Nickname;
-            }
-            let DataRowEmail = document.createElement("td"); DataRow.appendChild(DataRowEmail);
-            {
-                DataRowEmailAddressInput = document.createElement("input"); DataRowEmail.appendChild(DataRowEmailAddressInput);
-                DataRowEmailAddressInput.type = "text";
-                DataRowEmailAddressInput.classList.add("form-control", "BlurDefault");
-                DataRowEmailAddressInput.value = Response.Users[i].EmailAddress;
+                DataRowUsername.innerText = Response.UserInfo[i].Username;
             }
             let DataRowPassword = document.createElement("td"); DataRow.appendChild(DataRowPassword);
             {
                 DataRowPasswordInput = document.createElement("input"); DataRowPassword.appendChild(DataRowPasswordInput);
                 DataRowPasswordInput.type = "text";
                 DataRowPasswordInput.classList.add("form-control", "BlurDefault");
-                DataRowPasswordInput.value = Response.Users[i].Password;
+                DataRowPasswordInput.value = Response.UserInfo[i].Password;
             }
-            let DataRowRole = document.createElement("td"); DataRow.appendChild(DataRowRole);
+            let DataRowLuoguUsername = document.createElement("td"); DataRow.appendChild(DataRowLuoguUsername);
             {
-                DataRowRoleSelect = document.createElement("select"); DataRowRole.appendChild(DataRowRoleSelect);
-                CreateRoleSelect(DataRowRoleSelect, Response.Users[i].Role);
+                DataRowLuoguUsernameInput = document.createElement("input"); DataRowLuoguUsername.appendChild(DataRowLuoguUsernameInput);
+                DataRowLuoguUsernameInput.type = "text";
+                DataRowLuoguUsernameInput.classList.add("form-control");
+                DataRowLuoguUsernameInput.value = Response.UserInfo[i].LuoguUsername;
+            }
+            let DataRowLuoguPassword = document.createElement("td"); DataRow.appendChild(DataRowLuoguPassword);
+            {
+                DataRowLuoguPasswordInput = document.createElement("input"); DataRowLuoguPassword.appendChild(DataRowLuoguPasswordInput);
+                DataRowLuoguPasswordInput.type = "text";
+                DataRowLuoguPasswordInput.classList.add("form-control", "BlurDefault");
+                DataRowLuoguPasswordInput.value = Response.UserInfo[i].LuoguPassword;
+            }
+            let DataRowLastOnlineTime = document.createElement("td"); DataRow.appendChild(DataRowLastOnlineTime);
+            {
+                DataRowLastOnlineTime.innerText = new Date(Response.UserInfo[i].LastOnlineTime).toJSON();
+            }
+            let DataRowPermission = document.createElement("td"); DataRow.appendChild(DataRowPermission);
+            let DataRowPermissionDiv = document.createElement("div"); DataRowPermission.appendChild(DataRowPermissionDiv);
+            DataRowPermissionDiv.className = "form-check form-switch";
+            {
+                DataRowPermissionCheck = document.createElement("input"); DataRowPermissionDiv.appendChild(DataRowPermissionCheck);
+                DataRowPermissionCheck.type = "checkbox";
+                DataRowPermissionCheck.className = "form-check-input";
+                DataRowPermissionCheck.checked = Response.UserInfo[i].Permission;
+                DataRowPermissionCheck.id = "User" + i + "PermissionCheck";
+                let DataRowPermissionLabel = document.createElement("label"); DataRowPermissionDiv.append(DataRowPermissionLabel);
+                DataRowPermissionLabel.className = "form-check-label";
+                DataRowPermissionLabel.htmlFor = "User" + i + "PermissionCheck";
+                DataRowPermissionLabel.innerText = "Admin";
             }
             let DataRowAction = document.createElement("td"); DataRow.appendChild(DataRowAction);
             {
@@ -68,31 +78,18 @@ RequestAPI("GetUsers", {}, () => { }, (Response) => {
                 DataRowActionSaveButton.classList.add("btn-warning");
                 DataRowActionSaveButton.classList.add("me-1");
                 DataRowActionSaveButton.onclick = () => {
+                    AddLoading(DataRowActionSaveButton);
                     RequestAPI("UpdateUser", {
-                        "UID": Number(Response.Users[i].UID),
-                        "Username": String(DataRowUsernameInput.value),
-                        "Nickname": String(DataRowNicknameInput.value),
-                        "EmailAddress": String(DataRowEmailAddressInput.value),
+                        "Username": String(DataRowUsername.innerText),
                         "Password": String(DataRowPasswordInput.value),
-                        "Role": Number(DataRowRoleSelect.selectedIndex)
-                    }, () => { }, () => {
+                        "LuoguUsername": String(DataRowLuoguUsernameInput.value),
+                        "LuoguPassword": String(DataRowLuoguPasswordInput.value),
+                        "Permission": Number(DataRowPermissionCheck.checked),
+                    }, () => {
+                        RemoveLoading(DataRowActionSaveButton);
+                    }, () => {
                         ShowSuccess("Update User Success");
                     }, () => { }, () => { });
-                }
-                let DataRowActionDeleteButton = document.createElement("button"); DataRowAction.appendChild(DataRowActionDeleteButton);
-                DataRowActionDeleteButton.innerText = "Delete";
-                DataRowActionDeleteButton.classList.add("btn");
-                DataRowActionDeleteButton.classList.add("btn-danger");
-                DataRowActionDeleteButton.classList.add("me-1");
-                DataRowActionDeleteButton.onclick = () => {
-                    ShowModal("Delete user", "Are you sure to delete this user?", () => {
-                        RequestAPI("DeleteUser", {
-                            "UID": Number(Response.Users[i].UID)
-                        }, () => { }, () => {
-                            ShowSuccess("Delete User Success");
-                            DataRow.remove();
-                        }, () => { }, () => { });
-                    }, () => { });
                 }
             }
         }

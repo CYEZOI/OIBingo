@@ -57,9 +57,14 @@ const GetToken = () => {
         RequestAPI("CheckTokenAvailable", {
             "Token": String(localStorage.getItem("Token"))
         }, () => { }, () => { }, () => {
-            localStorage.removeItem("Token");
             Token = null;
         }, () => { Token = null; }, false);
+    }
+    if (Token == null) {
+        localStorage.removeItem("Username");
+        localStorage.removeItem("IsAdmin");
+        const AddonStyle = document.getElementById("AddonStyle");
+        AddonStyle.innerHTML = ".LoginOnly { display: none; }";
     }
     return Token;
 };
@@ -75,26 +80,17 @@ const RequestAPI = async (Action, Data, CallBack, SuccessCallback, FailCallback,
             return;
         }
     }
-    let Abort = new AbortController();
-    let Timeout = setTimeout(() => {
-        Abort.abort();
-        CallBack();
-        ErrorCallback();
-        ShowError("Request timeout");
-    }, 3000);
     await fetch("/API", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        signal: Abort.signal,
         body: JSON.stringify({
             APIName: Action,
             APIParams: Data,
             Auth: { Token: Token || "" }
         })
     }).then(Response => {
-        clearTimeout(Timeout);
         CallBack();
         if (Response.status == 200) {
             Response.json().then(Response => {
@@ -340,7 +336,7 @@ const CreateHorizontalLine = () => {
     if (localStorage.getItem("IsAdmin") !== null) {
         const AddonStyle = document.getElementById("AddonStyle");
         AddonStyle.innerHTML = ".NotLoginOnly { display: none; }";
-        if (localStorage.getItem("IsAdmin") !== "true") {
+        if (localStorage.getItem("IsAdmin") != true) {
             AddonStyle.innerHTML += ".AdminOnly { display: none; }";
         }
     }
@@ -360,7 +356,7 @@ const CreateHorizontalLine = () => {
         SwitchPage(new URLSearchParams(location.search).get("Page"), Data, false);
     }
     else {
-        SwitchPage("Home");
+        SwitchPage("Login");
     }
 })();
 onpopstate = (Event) => {

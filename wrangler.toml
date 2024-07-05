@@ -6,6 +6,9 @@ rules = [
   { type = "Data", globs = ["./HTML/*.*"], fallthrough = false }
 ]
 
+[placement]
+mode = "smart"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "oi-bingo"
