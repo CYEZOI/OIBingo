@@ -22,6 +22,7 @@ export class Luogu {
         for (let i = 0; i < ProblemPages; i++) TryList.add({ "Index": i, "TriedTimes": 0 });
         let Finished: number = 0;
         let WaitCounter: number = 0;
+        let ProblemCount: number = 0;
 
         while (TryList.size() > 0) {
             (async (Data) => {
@@ -53,6 +54,7 @@ export class Luogu {
                             "PassRate": Problem["totalAccepted"] / Problem["totalSubmit"],
                             "Difficulty": Problem["difficulty"],
                         }));
+                        ProblemCount++;
                     }
                 Finished++;
             })(TryList.poll()!);
@@ -60,9 +62,10 @@ export class Luogu {
             if (WaitCounter % 16 == 0) {
                 while (Finished != WaitCounter) await new Promise((resolve) => setTimeout(resolve, 10));
                 WaitCounter = 0, Finished = 0;
+                console.log(ProblemCount);
             }
         }
 
-        return new Result(true, "Problem list refreshed");
+        return new Result(true, "Problem list refreshed, currently " + ProblemCount + " problems");
     }
 }
