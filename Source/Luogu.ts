@@ -56,7 +56,7 @@ export class Luogu {
                     }
                 Finished++;
             })(TryList.poll()!);
-
+            WaitCounter++;
             if (WaitCounter % 16 == 0) {
                 while (Finished != WaitCounter) await new Promise((resolve) => setTimeout(resolve, 10));
                 WaitCounter = 0, Finished = 0;
