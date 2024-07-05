@@ -91,6 +91,13 @@ export class API {
             }
             return new Result(true, "Got bingo list", { "BingoList": TempBingoList });
         },
+        DeleteBingo: async (): Promise<Result> => {
+            ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
+                BingoName: "string"
+            }));
+            ThrowErrorIfFailed(await Bingo.DeleteBingo(this.DB, this.APIParams["BingoName"]));
+            return new Result(true, "Bingo deleted");
+        },
         RefreshProblemList: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
             return await Luogu.RefreshProblemList(this.DB);

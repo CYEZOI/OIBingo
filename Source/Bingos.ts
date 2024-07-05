@@ -30,4 +30,8 @@ export class Bingo {
         let BingoData = ThrowErrorIfFailed(await DB.Select("Bingos", []))["Results"];
         return new Result(true, "Got bingo list", { "BingoList": BingoData });
     }
+    static DeleteBingo = async (DB: Database, BingoName: string): Promise<Result> => {
+        ThrowErrorIfFailed(await DB.Delete("Bingos", { BingoName, }));
+        return new Result(true, "Bingo deleted");
+    }
 }

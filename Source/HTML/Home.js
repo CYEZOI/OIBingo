@@ -57,6 +57,8 @@ const DifficultyColor = [
 
 RequestAPI("GetBingos", {}, () => { }, (Data) => {
     BingoArea.innerHTML = "";
+    if (Data["BingoList"].length == 0)
+        BingoArea.innerHTML = "There are no Bingos yet.";
     for (let i = 0; i < Data["BingoList"].length; i++) {
         const Bingo = Data["BingoList"][i];
 
@@ -67,6 +69,20 @@ RequestAPI("GetBingos", {}, () => { }, (Data) => {
         let CardTitleElement = document.createElement("h5"); CardBodyElement.appendChild(CardTitleElement);
         CardTitleElement.className = "card-title";
         CardTitleElement.innerText = Bingo["BingoName"];
+        let CardTitleDeleteElement = document.createElement("button"); CardTitleElement.appendChild(CardTitleDeleteElement);
+        CardTitleDeleteElement.className = "ms-2 btn btn-sm btn-outline-danger";
+        CardTitleDeleteElement.innerText = "Delete"
+        CardTitleDeleteElement.addEventListener("click", () => {
+            AddLoading(CardTitleDeleteElement);
+            RequestAPI("DeleteBingo", {
+                BingoName: Bingo["BingoName"],
+            }, () => {
+                RemoveLoading(CardTitleDeleteElement);
+            }, () => {
+                ShowSuccess("Bingo deleted");
+                setTimeout(() => { window.location.reload() }, 1000);
+            }, () => { }, () => { });
+        });
         let CardTextElement = document.createElement("p"); CardBodyElement.appendChild(CardTextElement);
         CardTextElement.classList = "card-text";
         let CardTableElement = document.createElement("table"); CardTextElement.appendChild(CardTableElement);
