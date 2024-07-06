@@ -6,3 +6,35 @@
 .BlurDefault:focus {
     filter: blur(0px);
 }
+
+.BingoItem {
+    width: 100px;
+    height: 100px;
+    position: relative;
+}
+
+.BingoItemInnerBox {
+    position: absolute;
+    padding: 5px;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    transition: 0.5s;
+}
+
+.BingoItem>.BingoItemInnerBox:nth-child(1) {
+    opacity: 1;
+}
+
+.BingoItem:hover>.BingoItemInnerBox:nth-child(1) {
+    opacity: 0;
+}
+
+.BingoItem>.BingoItemInnerBox:nth-child(2) {
+    opacity: 0;
+}
+
+.BingoItem:hover>.BingoItemInnerBox:nth-child(2) {
+    opacity: 1;
+}

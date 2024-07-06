@@ -48,6 +48,13 @@ const CopyTextToClipboard = (Text) => {
     }
     document.body.removeChild(TextArea);
 };
+const GenerateColor = (StringData) => {
+    var Hash = "";
+    for (var i = 0; i < StringData.length; i++) {
+        Hash += parseInt(StringData[i].charCodeAt(0), 10).toString(16);
+    }
+    return "#" + Hash.slice(1, 4);
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

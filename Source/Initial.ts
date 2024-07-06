@@ -11,7 +11,7 @@ export class Initial {
             new DatabaseColumn({ "Name": "Password", "Type": "TEXT", "NotNull": true }),
             new DatabaseColumn({ "Name": "LuoguUsername", "Type": "TEXT" }),
             new DatabaseColumn({ "Name": "LuoguPassword", "Type": "TEXT" }),
-            new DatabaseColumn({ "Name": "LuoguClientID", "Type": "TEXT" }),
+            new DatabaseColumn({ "Name": "LuoguCookies", "Type": "TEXT" }),
             new DatabaseColumn({ "Name": "LastOnlineTime", "Type": "DATETIME", "NotNull": true }),
             new DatabaseColumn({ "Name": "Permission", "Type": "INTEGER", "NotNull": true, "DefaultValue": "0" }),
         ],

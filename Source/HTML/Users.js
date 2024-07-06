@@ -31,27 +31,6 @@ RequestAPI("GetUsers", {}, () => { }, (Response) => {
             {
                 DataRowUsername.innerText = Response.UserInfo[i].Username;
             }
-            let DataRowPassword = document.createElement("td"); DataRow.appendChild(DataRowPassword);
-            {
-                DataRowPasswordInput = document.createElement("input"); DataRowPassword.appendChild(DataRowPasswordInput);
-                DataRowPasswordInput.type = "text";
-                DataRowPasswordInput.classList.add("form-control", "BlurDefault");
-                DataRowPasswordInput.value = Response.UserInfo[i].Password;
-            }
-            let DataRowLuoguUsername = document.createElement("td"); DataRow.appendChild(DataRowLuoguUsername);
-            {
-                DataRowLuoguUsernameInput = document.createElement("input"); DataRowLuoguUsername.appendChild(DataRowLuoguUsernameInput);
-                DataRowLuoguUsernameInput.type = "text";
-                DataRowLuoguUsernameInput.classList.add("form-control");
-                DataRowLuoguUsernameInput.value = Response.UserInfo[i].LuoguUsername;
-            }
-            let DataRowLuoguPassword = document.createElement("td"); DataRow.appendChild(DataRowLuoguPassword);
-            {
-                DataRowLuoguPasswordInput = document.createElement("input"); DataRowLuoguPassword.appendChild(DataRowLuoguPasswordInput);
-                DataRowLuoguPasswordInput.type = "text";
-                DataRowLuoguPasswordInput.classList.add("form-control", "BlurDefault");
-                DataRowLuoguPasswordInput.value = Response.UserInfo[i].LuoguPassword;
-            }
             let DataRowLastOnlineTime = document.createElement("td"); DataRow.appendChild(DataRowLastOnlineTime);
             {
                 DataRowLastOnlineTime.innerText = new Date(Response.UserInfo[i].LastOnlineTime).toJSON();
@@ -88,7 +67,22 @@ RequestAPI("GetUsers", {}, () => { }, (Response) => {
                     }, () => {
                         RemoveLoading(DataRowActionSaveButton);
                     }, () => {
-                        ShowSuccess("Update User Success");
+                        ShowSuccess("Update user success");
+                    }, () => { }, () => { });
+                }
+                let DataRowActionResetLuoguTokenButton = document.createElement("button"); DataRowAction.appendChild(DataRowActionResetLuoguTokenButton);
+                DataRowActionResetLuoguTokenButton.innerText = "Reset luogu token";
+                DataRowActionResetLuoguTokenButton.classList.add("btn");
+                DataRowActionResetLuoguTokenButton.classList.add("btn-outline-warning");
+                DataRowActionResetLuoguTokenButton.classList.add("me-1");
+                DataRowActionResetLuoguTokenButton.onclick = () => {
+                    AddLoading(DataRowActionResetLuoguTokenButton);
+                    RequestAPI("ResetLuoguToken", {
+                        "Username": String(DataRowUsername.innerText),
+                    }, () => {
+                        RemoveLoading(DataRowActionResetLuoguTokenButton);
+                    }, () => {
+                        ShowSuccess("Reset user token success");
                     }, () => { }, () => { });
                 }
             }

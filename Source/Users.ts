@@ -1,4 +1,5 @@
 import { Database } from "./Database";
+import { Luogu } from "./Luogu";
 import { Result, ThrowErrorIfFailed } from "./Result";
 
 export class Users {
@@ -33,6 +34,7 @@ export class Users {
     }
     static AddUser = async (DB: Database, Username: string, Password: string): Promise<Result> => {
         ThrowErrorIfFailed(await DB.Insert("Users", { Username, Password, LastOnlineTime: new Date().getTime() }));
+        ThrowErrorIfFailed(await Luogu.GenerateNewCookies(DB, Username));
         return new Result(true, "User added");
     }
     static UpdateUser = async (DB: Database, Username: string, Password: string, LuoguUsername: string, LuoguPassword: string, Permission: string): Promise<Result> => {

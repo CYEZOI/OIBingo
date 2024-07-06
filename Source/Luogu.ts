@@ -2,8 +2,67 @@ import { Queue } from "typescript-queue";
 import { Database } from "./Database";
 import { Output } from "./Output";
 import { Result, ThrowErrorIfFailed } from "./Result";
+import * as base64js from "base64-js";
 
 export class Luogu {
+    static GenerateNewCookies = async (DB: Database, Username: string): Promise<Result> => {
+        ThrowErrorIfFailed(await DB.Update("Users", {
+            "LuoguCookies": (await fetch("https://www.luogu.com.cn/", { headers: {} })).headers.getSetCookie().map((value: string) => {
+                return value.split(";")[0];
+            }).join(";")
+        }, { Username }));
+        return new Result(true, "Cookies set");
+    }
+    static GetCookiesByUsername = async (DB: Database, Username: string): Promise<Result> => {
+        const UserInfo = ThrowErrorIfFailed(await DB.Select("Users", ["LuoguCookies",], { Username, }))["Results"];
+        if (UserInfo.length == 0) return new Result(false, "User not found");
+        return new Result(true, "Got cookies", { Cookies: UserInfo[0]["LuoguCookies"] });
+    }
+    static CheckLogin = async (DB: Database, Cookies: string): Promise<Result> => {
+        if ((await fetch("https://www.luogu.com.cn/chat?_contentOnly=1", { redirect: "manual", headers: { cookie: Cookies, } }).then(ResponseData => ResponseData.status)) == 200) {
+            return new Result(true, "Luogu logged in");
+        }
+        return new Result(false, "Luogu not logged in");
+    }
+    static GetCaptcha = async (DB: Database, Cookies: string): Promise<Result> => {
+        const CaptchaArrayBuffer: ArrayBuffer = await fetch("https://www.luogu.com.cn/lg4/captcha", { headers: { cookie: Cookies, } }).then(ResponseData => ResponseData.arrayBuffer());
+        const CaptchaBase64 = "data:image/jpeg;base64," + base64js.fromByteArray(new Uint8Array(CaptchaArrayBuffer));
+        return new Result(true, "Got captcha", { CaptchaBase64 });
+    }
+    static Login = async (DB: Database, Username: string, Captcha: string): Promise<Result> => {
+        const UserInfo = ThrowErrorIfFailed(await DB.Select("Users", ["LuoguUsername", "LuoguPassword",], { Username, }))["Results"];
+        if (UserInfo.length == 0) return new Result(false, "User not found");
+        const LuoguUsername: string = UserInfo[0]["LuoguUsername"];
+        const LuoguPassword: string = UserInfo[0]["LuoguPassword"];
+        const LuoguCookies: string = ThrowErrorIfFailed(await this.GetCookiesByUsername(DB, Username))["Cookies"];
+        let LuoguUID: string = "";
+        const LoginResponseData = await fetch("https://www.luogu.com.cn/do-auth/password", {
+            "headers": {
+                "accept": "application/json",
+                "content-type": "application/json",
+                "cookie": LuoguCookies,
+            },
+            "body": JSON.stringify({
+                "username": LuoguUsername,
+                "password": LuoguPassword,
+                "captcha": Captcha,
+            }),
+            "method": "POST"
+        }).then(ResponseData => {
+            if (ResponseData.headers.getSetCookie().length > 0) {
+                let CookieData = ResponseData.headers.getSetCookie()[0];
+                LuoguUID = CookieData.substring(5, CookieData.indexOf(";"));
+            }
+            return ResponseData.json();
+        });
+        if (LoginResponseData["errorCode"] != null) {
+            return new Result(false, "Login failed: " + LoginResponseData["errorMessage"]);
+        }
+        ThrowErrorIfFailed(await DB.Update("Users", {
+            "LuoguCookies": LuoguCookies.substring(0, 58) + LuoguUID
+        }, { Username }));
+        return new Result(true, "Logged in");
+    }
     static GetProblemList = async (DB: Database, Difficulty: Number): Promise<Result> => {
         let ProblemList = ThrowErrorIfFailed(await DB.Select("LuoguProblems", [], { Difficulty }))["Results"];
         return new Result(true, "Got problem list", { ProblemList });
@@ -62,10 +121,41 @@ export class Luogu {
             if (WaitCounter % 16 == 0) {
                 while (Finished != WaitCounter) await new Promise((resolve) => setTimeout(resolve, 10));
                 WaitCounter = 0, Finished = 0;
-                console.log(ProblemCount);
             }
         }
 
         return new Result(true, "Problem list refreshed, currently " + ProblemCount + " problems");
+    }
+    static GetLastACDetail = async (DB: Database, Cookies: string, Username: string, PID: string): Promise<Result> => {
+        const UserInfo: Array<any> = ThrowErrorIfFailed(await DB.Select("Users", ["LuoguUsername", "LuoguPassword",], { Username, }))["Results"];
+        if (UserInfo.length == 0) return new Result(false, "User not found");
+        const LuoguUsername: string = UserInfo[0]["LuoguUsername"];
+        const RecordListInfo: object = await fetch("https://www.luogu.com.cn/record/list?pid=" + PID + "&user=" + LuoguUsername + "&orderBy=0&page=1&_contentOnly=1", { headers: { cookie: Cookies, } }).then(ResponseData => ResponseData.json());
+        if (RecordListInfo["code"] != 200) {
+            return new Result(false, "Get last ac detail failed: " + RecordListInfo["currentData"]["errorMessage"]);
+        }
+        const RecordData: Array<any> = RecordListInfo["currentData"]["records"]["result"];
+        if (RecordData.length == 0) {
+            return new Result(false, "No such record");
+        }
+        RecordData.sort((a: any, b: any) => {
+            if (a["time"] != b["time"]) {
+                return a["time"] > b["time"] ? 1 : -1;
+            }
+            else if (a["memory"] != b["memory"]) {
+                return a["memory"] > b["memory"] ? 1 : -1;
+            }
+            else if (a["sourceCodeLength"] != b["sourceCodeLength"]) {
+                return a["sourceCodeLength"] > b["sourceCodeLength"] ? 1 : -1;
+            }
+            return 0;
+        });
+        return new Result(true, "Got last AC detail", {
+            Username,
+            "Time": RecordData[0]["time"],
+            "Memory": RecordData[0]["memory"],
+            "SourceCodeLength": RecordData[0]["sourceCodeLength"],
+            "SID": RecordData[0]["id"],
+        });
     }
 }

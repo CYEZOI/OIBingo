@@ -12,6 +12,7 @@
     "wrangler": "^3.0.0"
   },
   "dependencies": {
+    "base64-js": "^1.5.1",
     "typescript-queue": "^1.0.2"
   }
 }

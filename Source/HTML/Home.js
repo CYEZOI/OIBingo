@@ -93,17 +93,111 @@ RequestAPI("GetBingos", {}, () => { }, (Data) => {
             let CardTableRowElement = document.createElement("tr"); CardTableBodyElement.appendChild(CardTableRowElement);
             CardTableRowElement.style.height = "10rem";
             for (let jy = 0; jy < 5; jy++) {
-                const Problem = Bingo["BingoData"][jx * 5 + jy];
+                const Problem = Bingo["BingoData"][jx * 5 + jy]["Problem"];
+                const SubmitRecords = Bingo["BingoData"][jx * 5 + jy]["SubmitRecords"];
                 let CardTableColumnElement = document.createElement("td"); CardTableRowElement.appendChild(CardTableColumnElement);
+                CardTableColumnElement.classList = "BingoItem text-center";
                 CardTableColumnElement.style.widows = "10rem";
-                CardTableColumnElement.style.cursor = "pointer";
+                if (SubmitRecords.length > 0) {
+                    CardTableColumnElement.style.backgroundColor = GenerateColor(SubmitRecords[0]["Username"]);
+                }
                 CardTableColumnElement.setAttribute("data-bs-toggle", "tooltip");
                 CardTableColumnElement.setAttribute("data-bs-placement", "bottom");
                 CardTableColumnElement.setAttribute("data-bs-title", Problem["Title"]);
-                CardTableColumnElement.addEventListener("click", () => {
-                    window.open("https://www.luogu.com.cn/problem/" + Problem["PID"]);
-                });
-                CardTableColumnElement.innerHTML = `<div class="text-center"><div class="h4" style="color: ${DifficultyColor[Problem["Difficulty"]]}">${Problem["PID"]}</div><div>Pass rate: <br>${Number(Problem["PassRate"] * 100).toFixed(2)}%</div></div>`;
+                {
+                    let MouseLeaveElement = document.createElement("div"); CardTableColumnElement.appendChild(MouseLeaveElement);
+                    MouseLeaveElement.classList = "BingoItemInnerBox";
+                    {
+                        let Title = document.createElement("span"); MouseLeaveElement.appendChild(Title);
+                        Title.classList = "h4";
+                        Title.style.color = DifficultyColor[Problem["Difficulty"]];
+                        Title.innerText = Problem["PID"];
+                        let PassRate = document.createElement("div"); MouseLeaveElement.appendChild(PassRate);
+                        PassRate.classList = "mt-2";
+                        PassRate.innerText = "Pass rate: " + Number(Problem["PassRate"] * 100).toFixed(2) + "%";
+                        if (SubmitRecords.length > 0) {
+                            let Winner = document.createElement("div"); MouseLeaveElement.appendChild(Winner);
+                            Winner.classList = "mt-2";
+                            Winner.innerText = SubmitRecords[0]["Username"];
+                        }
+                    }
+                    let MouseOverElement = document.createElement("div"); CardTableColumnElement.appendChild(MouseOverElement);
+                    MouseOverElement.classList = "BingoItemInnerBox";
+                    {
+                        let Title = document.createElement("a"); MouseOverElement.appendChild(Title);
+                        Title.role = "link";
+                        Title.target = "_blank";
+                        Title.href = "https://www.luogu.com.cn/problem/" + Problem["PID"];
+                        Title.classList = "h4";
+                        Title.style.color = DifficultyColor[Problem["Difficulty"]];
+                        Title.innerText = Problem["PID"];
+                        let SubmitList = document.createElement("div"); MouseOverElement.appendChild(SubmitList);
+                        SubmitList.classList = "mt-2";
+                        for (let k = 0; k < Math.min(SubmitRecords.length, 3); k++) {
+                            let Submission = document.createElement("a"); SubmitList.appendChild(Submission);
+                            Submission.role = "link";
+                            Submission.target = "_blank";
+                            Submission.href = "https://www.luogu.com.cn/record/" + SubmitRecords[k]["SID"];
+                            Submission.classList = "mb-1";
+                            Submission.innerText = SubmitRecords[k]["Username"];
+                            Submission.setAttribute("data-bs-toggle", "tooltip");
+                            Submission.setAttribute("data-bs-placement", "right");
+                            Submission.setAttribute("data-bs-title",
+                                "Time: " + SubmitRecords[k]["Time"] + "ms " +
+                                "Memory: " + SubmitRecords[k]["Memory"] + "B " +
+                                "Source code: " + SubmitRecords[k]["SourceCodeLength"] + "B"
+                            );
+                        }
+                        let Submit = document.createElement("button"); MouseOverElement.appendChild(Submit);
+                        Submit.classList = "mt-2 btn btn-sm btn-outline-success";
+                        Submit.innerText = "Done!";
+                        Submit.addEventListener("click", () => {
+                            AddLoading(Submit);
+                            RequestAPI("CheckLuoguLogin", {}, () => {
+                            }, () => {
+                                RequestAPI("BingoSubmit", {
+                                    BingoName: String(Bingo["BingoName"]),
+                                    PID: String(Problem["PID"]),
+                                }, () => {
+                                    RemoveLoading(Submit);
+                                }, (ResponseData) => {
+                                    console.log(ResponseData);
+                                }, () => { }, () => { });
+                            }, () => {
+                                RemoveLoading(Submit);
+                                RequestAPI("GetLuoguCaptcha", {}, () => { }, (ResponseData) => {
+                                    MouseOverElement.innerHTML = "";
+                                    let CaptchaImage = document.createElement("img"); MouseOverElement.appendChild(CaptchaImage);
+                                    CaptchaImage.classList = "mb-2";
+                                    CaptchaImage.src = ResponseData["CaptchaBase64"];
+                                    CaptchaImage.addEventListener("click", () => {
+                                        RequestAPI("GetLuoguCaptcha", {}, () => { }, (ResponseData) => {
+                                            CaptchaImage.src = ResponseData["CaptchaBase64"];
+                                        }, () => { }, () => { });
+                                    });
+                                    let CaptchaInput = document.createElement("input"); MouseOverElement.appendChild(CaptchaInput);
+                                    CaptchaInput.classList = "form-control mb-2";
+                                    let CaptchaSubmit = document.createElement("button"); MouseOverElement.appendChild(CaptchaSubmit);
+                                    CaptchaSubmit.classList = "btn btn-sm btn-outline-success";
+                                    CaptchaSubmit.innerText = "Submit";
+                                    CaptchaSubmit.addEventListener("click", () => {
+                                        AddLoading(CaptchaSubmit);
+                                        RequestAPI("LuoguLogin", {
+                                            Captcha: String(CaptchaInput.value),
+                                        }, () => {
+                                            RemoveLoading(CaptchaSubmit);
+                                        }, () => {
+                                            ShowSuccess("Luogu login success, please resubmit");
+                                            setTimeout(() => { window.location.reload(); }, 1000);
+                                        }, () => {
+                                            CaptchaImage.click();
+                                        }, () => { });
+                                    });
+                                }, () => { }, () => { });
+                            }, () => { });
+                        });
+                    }
+                }
             }
         }
     }

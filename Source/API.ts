@@ -102,6 +102,39 @@ export class API {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
             return await Luogu.RefreshProblemList(this.DB);
         },
+        GetLuoguCaptcha: async (): Promise<Result> => {
+            ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
+            const LuoguCookies = ThrowErrorIfFailed(await Luogu.GetCookiesByUsername(this.DB, this.Auth["Username"]))["Cookies"];
+            return await Luogu.GetCaptcha(this.DB, LuoguCookies);
+        },
+        CheckLuoguLogin: async (): Promise<Result> => {
+            ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
+            const LuoguCookies = ThrowErrorIfFailed(await Luogu.GetCookiesByUsername(this.DB, this.Auth["Username"]))["Cookies"];
+            return await Luogu.CheckLogin(this.DB, LuoguCookies);
+        },
+        ResetLuoguToken: async (): Promise<Result> => {
+            ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
+                "Username": "string",
+            }));
+            ThrowErrorIfFailed(await Luogu.GenerateNewCookies(this.DB, this.APIParams["Username"]));
+            return new Result(true, "Reset luogu token");
+        },
+        LuoguLogin: async (): Promise<Result> => {
+            ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
+                Captcha: "string",
+            }));
+            return await Luogu.Login(this.DB, this.Auth["Username"], this.APIParams["Captcha"]);
+        },
+        BingoSubmit: async (): Promise<Result> => {
+            ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
+                BingoName: "string",
+                PID: "string",
+            }));
+            const LuoguCookies = ThrowErrorIfFailed(await Luogu.GetCookiesByUsername(this.DB, this.Auth["Username"]))["Cookies"];
+            const LastACDetail = ThrowErrorIfFailed(await Luogu.GetLastACDetail(this.DB, LuoguCookies, this.Auth["Username"], this.APIParams["PID"]));
+            ThrowErrorIfFailed(await Bingo.UpdateBingo(this.DB, this.APIParams["BingoName"], this.APIParams["PID"], LastACDetail));
+            return new Result(true, "Bingo submitted");
+        },
     };
 
     constructor(DB: Database, RequestJSON: object) {
@@ -126,7 +159,9 @@ export class API {
                 "AddUser",
                 "UpdateUser",
                 "CreateBingo",
+                "DeleteBingo",
                 "RefreshProblemList",
+                "ResetLuoguToken",
             ];
             if (NoLoginAPIWhitelist.find((ElementData) => ElementData === this.APIName) === undefined) {
                 ThrowErrorIfFailed(Utilities.CheckParams(this.Auth, {
