@@ -51,19 +51,13 @@ const CopyTextToClipboard = (Text) => {
 const GenerateColor = (StringData) => {
     let Seed = 0, B = 16777216;
     for (let i = 0; i < StringData.length; i++) {
-        Seed = Seed * 13331 % B;
+        Seed = Seed * 1331 % B;
         Seed = (Seed + StringData.charCodeAt(i)) % B;
     }
-    let Blue = 0xFF, Green = Seed >> 8 & 255, Red = 0;
-    if (Seed % 2 == 0) {
-        let Temp = Green;
-        Green = Blue;
-        Blue = Temp;
-    }
-    Red += Seed >> 12 & 63; Red = Math.min(Red, 255); Red = Red * ((Seed >> 16 & 63) + 192.0) / 256;
-    Green -= Seed >> 12 & 15; Green = Math.max(Green, 0); Green = Green * ((Seed >> 16 & 63) + 192.0) / 256;
-    Blue -= Seed >> 12 & 15; Blue = Math.max(Blue, 0); Blue = Blue * ((Seed >> 16 & 63) + 192.0) / 256;
-    return "rgba(" + Red + "," + Green + "," + Blue + ", 0.5)";
+    let Red = Seed & 255;
+    let Green = (Seed >> 8) & 255;
+    let Blue = (Seed >> 16) & 255;
+    return "rgba(" + Red + "," + Green + "," + Blue + ", 0.3)";
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
