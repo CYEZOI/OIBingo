@@ -110,7 +110,7 @@ export class Luogu {
                         ThrowErrorIfFailed(await DB.Insert("LuoguProblems", {
                             "PID": Problem["pid"],
                             "Title": Problem["title"],
-                            "PassRate": Problem["totalAccepted"] / Problem["totalSubmit"],
+                            "PassRate": Problem["totalSubmit"] == 0 ? 0 : Problem["totalAccepted"] / Problem["totalSubmit"],
                             "Difficulty": Problem["difficulty"],
                         }));
                         ProblemCount++;
@@ -127,10 +127,15 @@ export class Luogu {
         return new Result(true, "Problem list refreshed, currently " + ProblemCount + " problems");
     }
     static GetLastACDetail = async (DB: Database, Cookies: string, Username: string, PID: string): Promise<Result> => {
-        const UserInfo: Array<any> = ThrowErrorIfFailed(await DB.Select("Users", ["LuoguUsername", "LuoguPassword",], { Username, }))["Results"];
+        const UserInfo: Array<any> = ThrowErrorIfFailed(await DB.Select("Users", ["LuoguUsername",], { Username, }))["Results"];
         if (UserInfo.length == 0) return new Result(false, "User not found");
         const LuoguUsername: string = UserInfo[0]["LuoguUsername"];
-        const RecordListInfo: object = await fetch("https://www.luogu.com.cn/record/list?pid=" + PID + "&user=" + LuoguUsername + "&orderBy=0&page=1&_contentOnly=1", { headers: { cookie: Cookies, } }).then(ResponseData => ResponseData.json());
+        const Timeout = new AbortController();
+        const RecordListInfo: object = await fetch("https://www.luogu.com.cn/record/list?pid=" + PID + "&user=" + LuoguUsername + "&status=12&orderBy=0&page=1&_contentOnly=1", { headers: { cookie: Cookies, }, signal: Timeout.signal }).then(ResponseData => ResponseData.json()).catch(e => { throw new Result(false) });
+        setTimeout(() => {
+            console.log("abort");
+            Timeout.abort();
+        }, 5000);
         if (RecordListInfo["code"] != 200) {
             return new Result(false, "Get last ac detail failed: " + RecordListInfo["currentData"]["errorMessage"]);
         }
