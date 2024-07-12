@@ -139,10 +139,13 @@ export class Luogu {
         if (RecordListInfo["code"] != 200) {
             return new Result(false, "Get last ac detail failed: " + RecordListInfo["currentData"]["errorMessage"]);
         }
-        const RecordData: Array<any> = RecordListInfo["currentData"]["records"]["result"];
+        let RecordData: Array<any> = RecordListInfo["currentData"]["records"]["result"];
         if (RecordData.length == 0) {
             return new Result(false, "No such record");
         }
+        RecordData = RecordData.filter((a: any) => {
+            return (a.language >= 2 && a.language <= 4) || (a.language >= 11 && a.language <= 12) || (a.language >= 27 && a.language <= 28);
+        });
         RecordData.sort((a: any, b: any) => {
             if (a["time"] != b["time"]) {
                 return a["time"] > b["time"] ? 1 : -1;
