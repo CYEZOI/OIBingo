@@ -30,7 +30,7 @@ CreateBingoButton.addEventListener("click", () => {
         RemoveLoading(CreateBingoButton);
     }, () => {
         ShowSuccess("Create bingo success");
-        setTimeout(() => { window.location.reload(); }, 1000);
+        SwitchPage("Home");
     }, () => { }, () => { });
 });
 
@@ -70,7 +70,7 @@ RequestAPI("GetBingos", {}, () => { }, (Data) => {
         CardTitleElement.className = "card-title";
         CardTitleElement.innerText = Bingo["BingoName"];
         let CardTitleDeleteElement = document.createElement("button"); CardTitleElement.appendChild(CardTitleDeleteElement);
-        CardTitleDeleteElement.className = "ms-2 btn btn-sm btn-outline-danger";
+        CardTitleDeleteElement.className = "ms-2 btn btn-sm btn-outline-danger AdminOnly";
         CardTitleDeleteElement.innerText = "Delete"
         CardTitleDeleteElement.addEventListener("click", () => {
             AddLoading(CardTitleDeleteElement);
@@ -80,7 +80,7 @@ RequestAPI("GetBingos", {}, () => { }, (Data) => {
                 RemoveLoading(CardTitleDeleteElement);
             }, () => {
                 ShowSuccess("Bingo deleted");
-                setTimeout(() => { window.location.reload() }, 1000);
+                SwitchPage("Home");
             }, () => { }, () => { });
         });
         let CardTextElement = document.createElement("p"); CardBodyElement.appendChild(CardTextElement);
@@ -135,10 +135,11 @@ RequestAPI("GetBingos", {}, () => { }, (Data) => {
                         SubmitList.classList = "mt-2";
                         for (let k = 0; k < Math.min(SubmitRecords.length, 3); k++) {
                             let Submission = document.createElement("a"); SubmitList.appendChild(Submission);
+                            Submission.style.display = "block";
                             Submission.role = "link";
                             Submission.target = "_blank";
                             Submission.href = "https://www.luogu.com.cn/record/" + SubmitRecords[k]["SID"];
-                            Submission.classList = "mb-1";
+                            Submission.classList = "mb-0";
                             Submission.innerText = SubmitRecords[k]["Username"];
                             Submission.setAttribute("data-bs-toggle", "tooltip");
                             Submission.setAttribute("data-bs-placement", "right");
@@ -160,8 +161,9 @@ RequestAPI("GetBingos", {}, () => { }, (Data) => {
                                     PID: String(Problem["PID"]),
                                 }, () => {
                                     RemoveLoading(Submit);
-                                }, (ResponseData) => {
-                                    console.log(ResponseData);
+                                }, () => {
+                                    ShowSuccess("Bingo submitted");
+                                    SwitchPage("Home");
                                 }, () => { }, () => { });
                             }, () => {
                                 RemoveLoading(Submit);
@@ -188,7 +190,7 @@ RequestAPI("GetBingos", {}, () => { }, (Data) => {
                                             RemoveLoading(CaptchaSubmit);
                                         }, () => {
                                             ShowSuccess("Luogu login success, please resubmit");
-                                            setTimeout(() => { window.location.reload(); }, 1000);
+                                            SwitchPage("Home");
                                         }, () => {
                                             CaptchaImage.click();
                                         }, () => { });

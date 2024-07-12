@@ -57,14 +57,14 @@ export class Bingo {
                     }
                     return 0;
                 });
-                const SubmitUserList: Array<string> = [];
+                let SubmitUserList: Array<string> = [];
                 for (let j = 0; j < BingoData[i]["SubmitRecords"].length; j++) {
                     const Username: string = BingoData[i]["SubmitRecords"][j]["Username"];
                     if (SubmitUserList.indexOf(Username) == -1) {
                         SubmitUserList.push(Username);
                     }
                     else {
-                        SubmitUserList.splice(j, 1);
+                        BingoData[i]["SubmitRecords"].splice(j, 1);
                         j--;
                     }
                 }
