@@ -3,7 +3,7 @@ import { Result, ThrowErrorIfFailed } from "./Result";
 import { Utilities } from "./Utilities";
 
 export class Token {
-    static TokenExpireTime = 1000 * 60 * 60 * 3;
+    static TokenExpireTime = 1000 * 60 * 60 * 24;
     static CreateToken = async (DB: Database, Username: string): Promise<Result> => {
         const TokenValue: string = Utilities.GenerateRandomString(32, "012346789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
         ThrowErrorIfFailed(await DB.Insert("Tokens", {

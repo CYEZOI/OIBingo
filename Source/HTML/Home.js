@@ -70,9 +70,26 @@ const UpdateBingo = () => {
             let CardTitleElement = document.createElement("h5"); CardBodyElement.appendChild(CardTitleElement);
             CardTitleElement.className = "card-title";
             CardTitleElement.innerText = Bingo["BingoName"];
+            if (Bingo["Winner"] != "") {
+                CardTitleElement.innerText += " (Winner: " + Bingo["Winner"] + ")";
+            }
+            let CardTitleDoneAllElement = document.createElement("button"); CardTitleElement.appendChild(CardTitleDoneAllElement);
+            CardTitleDoneAllElement.className = "ms-2 btn btn-sm btn-outline-success";
+            CardTitleDoneAllElement.innerText = "Done all";
+            CardTitleDoneAllElement.addEventListener("click", () => {
+                AddLoading(CardTitleDoneAllElement);
+                RequestAPI("BingoSubmitAll", {
+                    BingoName: String(Bingo["BingoName"]),
+                }, () => {
+                    RemoveLoading(CardTitleDoneAllElement);
+                }, () => {
+                    ShowSuccess("Bingo submitted");
+                    SwitchPage("Home");
+                }, () => { }, () => { });
+            });
             let CardTitleDeleteElement = document.createElement("button"); CardTitleElement.appendChild(CardTitleDeleteElement);
             CardTitleDeleteElement.className = "ms-2 btn btn-sm btn-outline-danger AdminOnly";
-            CardTitleDeleteElement.innerText = "Delete"
+            CardTitleDeleteElement.innerText = "Delete";
             CardTitleDeleteElement.addEventListener("click", () => {
                 AddLoading(CardTitleDeleteElement);
                 RequestAPI("DeleteBingo", {
@@ -146,7 +163,7 @@ const UpdateBingo = () => {
                                 Submission.setAttribute("data-bs-placement", "right");
                                 Submission.setAttribute("data-bs-title",
                                     "Time: " + SubmitRecords[k]["Time"] + "ms " +
-                                    "Memory: " + SubmitRecords[k]["Memory"] + "B " +
+                                    "Memory: " + SubmitRecords[k]["Memory"] + "KB " +
                                     "Source code: " + SubmitRecords[k]["SourceCodeLength"] + "B"
                                 );
                             }

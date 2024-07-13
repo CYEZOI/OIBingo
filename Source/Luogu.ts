@@ -131,21 +131,21 @@ export class Luogu {
         if (UserInfo.length == 0) return new Result(false, "User not found");
         const LuoguUsername: string = UserInfo[0]["LuoguUsername"];
         const Timeout = new AbortController();
-        const RecordListInfo: object = await fetch("https://www.luogu.com.cn/record/list?pid=" + PID + "&user=" + LuoguUsername + "&status=12&orderBy=0&page=1&_contentOnly=1", { headers: { cookie: Cookies, }, signal: Timeout.signal }).then(ResponseData => ResponseData.json()).catch(e => { throw new Result(false) });
+        const RecordListInfo: object = await fetch("https://www.luogu.com.cn/record/list?pid=" + PID + "&user=" + LuoguUsername + "&status=12&orderBy=0&page=1&_contentOnly=1", { headers: { cookie: Cookies, }, signal: Timeout.signal }).then(ResponseData => ResponseData.json()).catch(e => { throw new Result(false, "Luogu request failed"); });
         setTimeout(() => {
-            console.log("abort");
             Timeout.abort();
+            // throw new Result(false, "Luogu request failed");
         }, 5000);
         if (RecordListInfo["code"] != 200) {
             return new Result(false, "Get last ac detail failed: " + RecordListInfo["currentData"]["errorMessage"]);
         }
         let RecordData: Array<any> = RecordListInfo["currentData"]["records"]["result"];
-        if (RecordData.length == 0) {
-            return new Result(false, "No such record");
-        }
         RecordData = RecordData.filter((a: any) => {
             return (a.language >= 2 && a.language <= 4) || (a.language >= 11 && a.language <= 12) || (a.language >= 27 && a.language <= 28);
         });
+        if (RecordData.length == 0) {
+            return new Result(false, "No such record");
+        }
         RecordData.sort((a: any, b: any) => {
             if (a["time"] != b["time"]) {
                 return a["time"] > b["time"] ? 1 : -1;

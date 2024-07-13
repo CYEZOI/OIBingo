@@ -1,7 +1,7 @@
 import { Database } from "./Database";
 import { DatabaseColumn } from "./DatabaseColumn";
 import { Output } from "./Output";
-import { ThrowErrorIfFailed } from "./Result";
+import { Result, ThrowErrorIfFailed } from "./Result";
 
 export class Initial {
     private DB: Database;
@@ -23,7 +23,7 @@ export class Initial {
         Bingos: [
             new DatabaseColumn({ "Name": "BingoName", "Type": "TEXT", "NotNull": true, "PrimaryKey": true }),
             new DatabaseColumn({ "Name": "BingoData", "Type": "TEXT", "NotNull": true }),
-            new DatabaseColumn({ "Name": "CreateTime", "Type": "DATETIME", "NotNull": true }),
+            new DatabaseColumn({ "Name": "Winner", "Type": "TEXT", "NotNull": true }),
         ],
         LuoguProblems: [
             new DatabaseColumn({ "Name": "PID", "Type": "TEXT", "NotNull": true, "PrimaryKey": true }),

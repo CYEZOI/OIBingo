@@ -375,3 +375,5 @@ onpopstate = (Event) => {
         SwitchPage(Event.state.Path, Event.state.Data, false);
     }
 };
+
+// ShowModal("Warning! Please read carefully!", "All user must be registered again and all submissions must be resubmitted for the database is lost! But the developer rescued the problem data so that it would not be random again. The problem is not displaying now because the cached luogu problems has been gone too, and it will be fetched again when there is internet. A new utility called `Done all problem` would be online soon. You have to reenter your Luogu username and password because the database is lost!", () => { ShowModal("Note", "There is a register page!"); }, () => { ShowModal("Note", "There is a register page!"); });

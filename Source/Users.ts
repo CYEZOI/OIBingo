@@ -3,6 +3,10 @@ import { Luogu } from "./Luogu";
 import { Result, ThrowErrorIfFailed } from "./Result";
 
 export class Users {
+    static Register = async (DB: Database, Username: string, Password: string): Promise<Result> => {
+        ThrowErrorIfFailed(await DB.Insert("Users", { Username, Password, Permission: 0, LastOnlineTime: new Date().getTime() }));
+        return new Result(true, "Registered");
+    }
     static CheckUsernameAndPassword = async (DB: Database, Username: string, Password: string): Promise<Result> => {
         let UserInfo = ThrowErrorIfFailed(await DB.GetTableSize("Users", { Username, Password, }))["TableSize"];
         if (UserInfo === 0) return new Result(false, "Username or password incorrect");
