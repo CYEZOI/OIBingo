@@ -2,10 +2,14 @@ const RefreshProblemList = document.getElementById("RefreshProblemList");
 const CreateBingoName = document.getElementById("CreateBingoName");
 const CreateBingoDifficulties = document.getElementById("CreateBingoDifficulties");
 const CreateBingoButton = document.getElementById("CreateBingoButton");
+const ShowOnlyNotWinned = document.getElementById("ShowOnlyNotWinned");
+const RefreshBingos = document.getElementById("RefreshBingos");
 const BingoArea = document.getElementById("BingoArea");
 for (let i = 0; i < 10; i++)
     BingoArea.appendChild(CreatePlaceHolder());
 CheckTokenAvailable();
+
+let OnlyNoWin = true;
 
 RefreshProblemList.addEventListener("click", () => {
     ShowModal("Refresh problem list", "Are you sure you want to refresh problem list? This may take a while. ", () => {
@@ -33,6 +37,11 @@ CreateBingoButton.addEventListener("click", () => {
         SwitchPage("Home");
     }, () => { }, () => { });
 });
+ShowOnlyNotWinned.addEventListener("change", () => {
+    OnlyNoWin = ShowOnlyNotWinned.checked;
+    UpdateBingo();
+});
+RefreshBingos.addEventListener("click", () => { UpdateBingo(); });
 
 const DifficultyName = [
     "暂无评定",
@@ -56,7 +65,12 @@ const DifficultyColor = [
 ]
 
 const UpdateBingo = () => {
-    RequestAPI("GetBingos", {}, () => { }, (Data) => {
+    AddLoading(RefreshBingos);
+    RequestAPI("GetBingos", {
+        OnlyNoWin: OnlyNoWin,
+    }, () => {
+        RemoveLoading(RefreshBingos);
+    }, (Data) => {
         BingoArea.innerHTML = "";
         if (Data["BingoList"].length == 0)
             BingoArea.innerHTML = "There are no Bingos yet.";
@@ -117,7 +131,7 @@ const UpdateBingo = () => {
                     CardTableColumnElement.classList = "BingoItem text-center";
                     CardTableColumnElement.style.widows = "10rem";
                     if (SubmitRecords.length > 0) {
-                        CardTableColumnElement.style.backgroundColor = GenerateColor(SubmitRecords[0]["Username"]);
+                        CardTableColumnElement.style.backgroundColor = SubmitRecords[0]["Color"] + "AA";
                     }
                     CardTableColumnElement.setAttribute("data-bs-toggle", "tooltip");
                     CardTableColumnElement.setAttribute("data-bs-placement", "bottom");
@@ -134,7 +148,12 @@ const UpdateBingo = () => {
                             PassRate.classList = "mt-2";
                             PassRate.innerText = "Pass rate: " + Number(Problem["PassRate"] * 100).toFixed(2) + "%";
                             if (SubmitRecords.length > 0) {
-                                let Winner = document.createElement("div"); MouseLeaveElement.appendChild(Winner);
+                                let WinnerAvatar = document.createElement("img"); MouseLeaveElement.appendChild(WinnerAvatar);
+                                WinnerAvatar.classList = "rounded me-1";
+                                WinnerAvatar.style.height = "1rem";
+                                WinnerAvatar.style.width = "1rem";
+                                WinnerAvatar.src = SubmitRecords[0]["Avatar"];
+                                let Winner = document.createElement("span"); MouseLeaveElement.appendChild(Winner);
                                 Winner.classList = "mt-2";
                                 Winner.innerText = SubmitRecords[0]["Username"];
                             }
@@ -146,26 +165,34 @@ const UpdateBingo = () => {
                             Title.role = "link";
                             Title.target = "_blank";
                             Title.href = "https://www.luogu.com.cn/problem/" + Problem["PID"];
-                            Title.classList = "h4";
-                            Title.style.color = DifficultyColor[Problem["Difficulty"]];
+                            Title.classList = "h4 px-2 rounded";
+                            Title.style.color = "white";
+                            Title.style.backgroundColor = DifficultyColor[Problem["Difficulty"]];
                             Title.innerText = Problem["PID"];
                             let SubmitList = document.createElement("div"); MouseOverElement.appendChild(SubmitList);
                             SubmitList.classList = "mt-2";
                             for (let k = 0; k < Math.min(SubmitRecords.length, 3); k++) {
-                                let Submission = document.createElement("a"); SubmitList.appendChild(Submission);
-                                Submission.style.display = "block";
-                                Submission.role = "link";
-                                Submission.target = "_blank";
-                                Submission.href = "https://www.luogu.com.cn/record/" + SubmitRecords[k]["SID"];
-                                Submission.classList = "mb-0";
-                                Submission.innerText = SubmitRecords[k]["Username"];
-                                Submission.setAttribute("data-bs-toggle", "tooltip");
-                                Submission.setAttribute("data-bs-placement", "right");
-                                Submission.setAttribute("data-bs-title",
-                                    "Time: " + SubmitRecords[k]["Time"] + "ms " +
-                                    "Memory: " + SubmitRecords[k]["Memory"] + "KB " +
-                                    "Source code: " + SubmitRecords[k]["SourceCodeLength"] + "B"
-                                );
+                                let Submission = document.createElement("div"); SubmitList.appendChild(Submission);
+                                {
+                                    let SubmissionAvatar = document.createElement("img"); Submission.appendChild(SubmissionAvatar);
+                                    SubmissionAvatar.classList = "rounded me-1";
+                                    SubmissionAvatar.style.height = "1rem";
+                                    SubmissionAvatar.style.width = "1rem";
+                                    SubmissionAvatar.src = SubmitRecords[k]["Avatar"];
+                                    let SubmissionLink = document.createElement("a"); Submission.appendChild(SubmissionLink);
+                                    SubmissionLink.role = "link";
+                                    SubmissionLink.target = "_blank";
+                                    SubmissionLink.href = "https://www.luogu.com.cn/record/" + SubmitRecords[k]["SID"];
+                                    SubmissionLink.classList = "mb-0";
+                                    SubmissionLink.innerText = SubmitRecords[k]["Username"];
+                                    SubmissionLink.setAttribute("data-bs-toggle", "tooltip");
+                                    SubmissionLink.setAttribute("data-bs-placement", "right");
+                                    SubmissionLink.setAttribute("data-bs-title",
+                                        "Time: " + SubmitRecords[k]["Time"] + "ms " +
+                                        "Memory: " + SubmitRecords[k]["Memory"] + "KB " +
+                                        "Source code: " + SubmitRecords[k]["SourceCodeLength"] + "B"
+                                    );
+                                }
                             }
                             let Submit = document.createElement("button"); MouseOverElement.appendChild(Submit);
                             Submit.classList = "mt-2 btn btn-sm btn-outline-success";
@@ -228,9 +255,7 @@ const UpdateBingo = () => {
 };
 
 UpdateBingo();
-// setInterval(() => {
-//     UpdateBingo();
-// }, 10000);
+window.addEventListener("focus", () => { UpdateBingo(); });
 
 (() => {
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')

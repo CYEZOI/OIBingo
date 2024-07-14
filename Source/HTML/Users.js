@@ -26,15 +26,13 @@ RequestAPI("GetUsers", {}, () => { }, (Response) => {
     for (let i = 0; i < Response.UserInfo.length; i++) {
         let DataRow = document.createElement("tr"); UsersData.children[1].appendChild(DataRow);
         {
-            let DataRowPasswordInput, DataRowLuoguUsernameInput, DataRowLuoguPasswordInput, DataRowPermissionCheck;
+            let DataRowPermissionCheck;
             let DataRowUsername = document.createElement("td"); DataRow.appendChild(DataRowUsername);
-            {
-                DataRowUsername.innerText = Response.UserInfo[i].Username;
-            }
+            DataRowUsername.innerText = Response.UserInfo[i].Username;
+            let DataRowLuoguUsername = document.createElement("td"); DataRow.appendChild(DataRowLuoguUsername);
+            DataRowLuoguUsername.innerText = Response.UserInfo[i].LuoguUsername;
             let DataRowLastOnlineTime = document.createElement("td"); DataRow.appendChild(DataRowLastOnlineTime);
-            {
-                DataRowLastOnlineTime.innerText = new Date(Response.UserInfo[i].LastOnlineTime).toJSON();
-            }
+            DataRowLastOnlineTime.innerText = new Date(Response.UserInfo[i].LastOnlineTime).toJSON();
             let DataRowPermission = document.createElement("td"); DataRow.appendChild(DataRowPermission);
             let DataRowPermissionDiv = document.createElement("div"); DataRowPermission.appendChild(DataRowPermissionDiv);
             DataRowPermissionDiv.className = "form-check form-switch";
@@ -58,16 +56,13 @@ RequestAPI("GetUsers", {}, () => { }, (Response) => {
                 DataRowActionSaveButton.classList.add("me-1");
                 DataRowActionSaveButton.onclick = () => {
                     AddLoading(DataRowActionSaveButton);
-                    RequestAPI("UpdateUser", {
+                    RequestAPI("UpdatePermission", {
                         "Username": String(DataRowUsername.innerText),
-                        "Password": String(DataRowPasswordInput.value),
-                        "LuoguUsername": String(DataRowLuoguUsernameInput.value),
-                        "LuoguPassword": String(DataRowLuoguPasswordInput.value),
                         "Permission": Number(DataRowPermissionCheck.checked),
                     }, () => {
                         RemoveLoading(DataRowActionSaveButton);
                     }, () => {
-                        ShowSuccess("Update user success");
+                        ShowSuccess("Update user permission success");
                     }, () => { }, () => { });
                 }
                 let DataRowActionResetLuoguTokenButton = document.createElement("button"); DataRowAction.appendChild(DataRowActionResetLuoguTokenButton);

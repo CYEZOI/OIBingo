@@ -14,6 +14,8 @@ export class Initial {
             new DatabaseColumn({ "Name": "LuoguCookies", "Type": "TEXT" }),
             new DatabaseColumn({ "Name": "LastOnlineTime", "Type": "DATETIME", "NotNull": true }),
             new DatabaseColumn({ "Name": "Permission", "Type": "INTEGER", "NotNull": true, "DefaultValue": "0" }),
+            new DatabaseColumn({ "Name": "Color", "Type": "TEXT", "NotNull": true }),
+            new DatabaseColumn({ "Name": "Avatar", "Type": "TEXT" }),
         ],
         Tokens: [
             new DatabaseColumn({ "Name": "TokenValue", "Type": "TEXT", "NotNull": true, "PrimaryKey": true }),

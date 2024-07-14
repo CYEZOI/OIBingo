@@ -48,17 +48,6 @@ const CopyTextToClipboard = (Text) => {
     }
     document.body.removeChild(TextArea);
 };
-const GenerateColor = (StringData) => {
-    let Seed = 0, B = 16777216;
-    for (let i = 0; i < StringData.length; i++) {
-        Seed = Seed * 1331 % B;
-        Seed = (Seed + StringData.charCodeAt(i)) % B;
-    }
-    let Red = Seed & 255;
-    let Green = (Seed >> 8) & 255;
-    let Blue = (Seed >> 16) & 255;
-    return "rgba(" + Red + "," + Green + "," + Blue + ", 0.3)";
-};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -134,7 +123,7 @@ const SwitchPage = async (Path, Data = {}, PushState = true) => {
         }, Path, URLPath);
     }
 
-    document.title = PathToName(Path);
+    document.title = PathToName(Path) + " - OIBingo";
     for (let i = 0; i < NavigateBar.children[0].children.length; i++) {
         if (NavigateBar.children[0].children[i].innerText == Path) {
             NavigateBar.children[0].children[i].children[0].classList.add("active");
@@ -375,5 +364,3 @@ onpopstate = (Event) => {
         SwitchPage(Event.state.Path, Event.state.Data, false);
     }
 };
-
-// ShowModal("Warning! Please read carefully!", "All user must be registered again and all submissions must be resubmitted for the database is lost! But the developer rescued the problem data so that it would not be random again. The problem is not displaying now because the cached luogu problems has been gone too, and it will be fetched again when there is internet. A new utility called `Done all problem` would be online soon. You have to reenter your Luogu username and password because the database is lost!", () => { ShowModal("Note", "There is a register page!"); }, () => { ShowModal("Note", "There is a register page!"); });

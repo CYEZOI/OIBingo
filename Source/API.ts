@@ -25,7 +25,7 @@ export class API {
                 Username: "string",
                 Password: "string",
             }));
-            ThrowErrorIfFailed(await Users.Register(this.DB, this.APIParams["Username"], this.APIParams["Password"]));
+            ThrowErrorIfFailed(await Users.AddUser(this.DB, this.APIParams["Username"], this.APIParams["Password"]));
             ThrowErrorIfFailed(await Users.UpdateOnlineTime(this.DB, this.APIParams["Username"]));
             return new Result(true, "Register success");
         },
@@ -37,7 +37,7 @@ export class API {
             ThrowErrorIfFailed(await Users.CheckUsernameAndPassword(this.DB, this.APIParams["Username"], this.APIParams["Password"]));
             ThrowErrorIfFailed(await Users.UpdateOnlineTime(this.DB, this.APIParams["Username"]));
             const TokenValue: string = ThrowErrorIfFailed(await Token.CreateToken(this.DB, this.APIParams["Username"]))["TokenValue"];
-            const IsAdmin: boolean = ThrowErrorIfFailed(await Users.GetUserPermission(this.DB, this.APIParams["Username"]))["Permission"];
+            const IsAdmin: boolean = ThrowErrorIfFailed(await Users.GetUser(this.DB, this.APIParams["Username"]))["Permission"];
             return new Result(true, "Login success", { Token: TokenValue, IsAdmin });
         },
         Logout: async (): Promise<Result> => {
@@ -47,14 +47,22 @@ export class API {
         },
         GetSettings: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
-            return await Users.GetLuoguSettings(this.DB, this.Auth["Username"]);
+            const UserInfo = ThrowErrorIfFailed(await Users.GetUser(this.DB, this.Auth["Username"]));
+            return new Result(true, "Got settings", {
+                LuoguUsername: UserInfo["LuoguUsername"],
+                LuoguPassword: UserInfo["LuoguPassword"],
+                Color: UserInfo["Color"],
+                Avatar: UserInfo["Avatar"],
+            });
         },
         SetSettings: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
                 LuoguUsername: "string",
                 LuoguPassword: "string",
+                Color: "string",
+                Avatar: "string",
             }));
-            return await Users.SetLuoguSettings(this.DB, this.Auth["Username"], this.APIParams["LuoguUsername"], this.APIParams["LuoguPassword"]);
+            return await Users.SetSettings(this.DB, this.Auth["Username"], this.APIParams["LuoguUsername"], this.APIParams["LuoguPassword"], this.APIParams["Color"], this.APIParams["Avatar"]);
         },
         GetUsers: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
@@ -70,25 +78,19 @@ export class API {
                 this.APIParams["Password"],
             );
         },
-        UpdateUser: async (): Promise<Result> => {
+        UpdatePermission: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
                 "Username": "string",
-                "Password": "string",
-                "LuoguUsername": "string",
-                "LuoguPassword": "string",
                 "Permission": "number",
             }));
-            return await Users.UpdateUser(this.DB,
+            return await Users.UpdatePermission(this.DB,
                 this.APIParams["Username"],
-                this.APIParams["Password"],
-                this.APIParams["LuoguUsername"],
-                this.APIParams["LuoguPassword"],
                 this.APIParams["Permission"],
             );
         },
-        RestoreBingo: async (): Promise<Result> => {
+        ImportBingo: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
-            return await Bingo.RestoreBingo(this.DB);
+            return await Bingo.ImportBingo(this.DB);
         },
         CreateBingo: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
@@ -98,10 +100,22 @@ export class API {
             return await Bingo.CreateBingo(this.DB, this.APIParams["Name"], this.APIParams["Difficulties"]);
         },
         GetBingos: async (): Promise<Result> => {
-            ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
-            const TempBingoList = ThrowErrorIfFailed(await Bingo.GetBingoList(this.DB))["BingoList"];
+            ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
+                OnlyNoWin: "boolean",
+            }));
+            const TempBingoList = ThrowErrorIfFailed(await Bingo.GetBingoList(this.DB, this.APIParams["OnlyNoWin"]))["BingoList"];
             for (let i = 0; i < TempBingoList.length; i++) {
                 TempBingoList[i]["BingoData"] = JSON.parse(TempBingoList[i]["BingoData"]);
+                const BingoData = TempBingoList[i]["BingoData"];
+                for (let j = 0; j < BingoData.length; j++) {
+                    const SubmitRecords = BingoData[j]["SubmitRecords"];
+                    for (let k = 0; k < SubmitRecords.length; k++) {
+                        const Username = SubmitRecords[k]["Username"];
+                        const UserInfo = ThrowErrorIfFailed(await Users.GetUser(this.DB, Username));
+                        SubmitRecords[k]["Color"] = UserInfo["Color"];
+                        SubmitRecords[k]["Avatar"] = UserInfo["Avatar"] || "https://image.langningchen.com/ybfthfouxdfxzeomllowmeidyqqvnyto";
+                    }
+                }
             }
             return new Result(true, "Got bingo list", { "BingoList": TempBingoList });
         },
@@ -187,8 +201,8 @@ export class API {
             const AdminAPIBlackList = [
                 "GetUsers",
                 "AddUser",
-                "UpdateUser",
-                "RestoreBingo",
+                "UpdatePermission",
+                "ImportBingo",
                 "CreateBingo",
                 "DeleteBingo",
                 "RefreshProblemList",
@@ -203,7 +217,7 @@ export class API {
                 ThrowErrorIfFailed(await Users.UpdateOnlineTime(this.DB, this.Auth["Username"]));
             }
             if (AdminAPIBlackList.find((ElementData) => ElementData === this.APIName) !== undefined) {
-                if (ThrowErrorIfFailed(await Users.GetUserPermission(this.DB, this.Auth["Username"]))["Permission"] != 1) {
+                if (ThrowErrorIfFailed(await Users.GetUser(this.DB, this.Auth["Username"]))["Permission"] != 1) {
                     throw new Result(false, "You are not administrator");
                 }
             }
