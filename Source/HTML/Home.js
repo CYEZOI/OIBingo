@@ -90,6 +90,7 @@ const UpdateBingo = () => {
             let CardTitleDoneAllElement = document.createElement("button"); CardTitleElement.appendChild(CardTitleDoneAllElement);
             CardTitleDoneAllElement.className = "ms-2 btn btn-sm btn-outline-success";
             CardTitleDoneAllElement.innerText = "Done all";
+            CardTitleDoneAllElement.disabled = Bingo["Winner"] != "";
             CardTitleDoneAllElement.addEventListener("click", () => {
                 AddLoading(CardTitleDoneAllElement);
                 RequestAPI("BingoSubmitAll", {
@@ -160,6 +161,7 @@ const UpdateBingo = () => {
                         }
                         let MouseOverElement = document.createElement("div"); CardTableColumnElement.appendChild(MouseOverElement);
                         MouseOverElement.classList = "BingoItemInnerBox";
+                        MouseOverElement.style.backgroundColor = (SubmitRecords.length > 0 ? SubmitRecords[0]["Color"] : "#ffffff")
                         {
                             let Title = document.createElement("a"); MouseOverElement.appendChild(Title);
                             Title.role = "link";
@@ -197,6 +199,7 @@ const UpdateBingo = () => {
                             let Submit = document.createElement("button"); MouseOverElement.appendChild(Submit);
                             Submit.classList = "mt-2 btn btn-sm btn-outline-success";
                             Submit.innerText = "Done!";
+                            Submit.disabled = Bingo["Winner"] != "";
                             Submit.addEventListener("click", () => {
                                 AddLoading(Submit);
                                 RequestAPI("CheckLuoguLogin", {}, () => {

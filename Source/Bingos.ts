@@ -6,7 +6,7 @@ import { Result, ThrowErrorIfFailed } from "./Result";
 export class Bingo {
     static ImportBingo = async (DB: Database): Promise<Result> => {
         const BingoRestoreData = {
-            "ARC ケロシ Moderate": ['AT_abc266_g', 'AT_abc233_f', 'AT_arc120_d', 'AT_arc173_c', 'AT_tenka1_2012_qualA_3', 'AT_arc148_d', 'AT_abc217_g', 'AT_arc169_c', 'AT_arc134_d', 'AT_abc003_4', 'AT_code_festival_morning_med_d', 'AT_abc205_f', 'AT_agc016_c', 'AT_agc045_a', 'AT_abc358_f', 'AT_arc108_d', 'AT_exawizards2019_d', 'AT_arc137_c', 'AT_mujin_pc_2016_c', 'AT_arc112_d', 'AT_abc256_f', 'AT_abc317_f', 'AT_code_formula_2014_final_e', 'AT_abc312_e', 'AT_abc263_f'],
+            "CF": ["CF1009E", "CF1037F", "CF1045A", "CF1148F", "CF1155E", "CF1243B2", "CF1271F", "CF1280B", "CF1295D", "CF1422F", "CF1442B", "CF1491C", "CF1526E", "CF1592C", "CF1793E", "CF1808E2", "CF1896E", "CF1914F", "CF237C", "CF3B", "CF404C", "CF407C", "CF570B", "CF917B", "CF954E",],
         };
         for (const BingoName in BingoRestoreData) {
             const BingoData = BingoRestoreData[BingoName];
@@ -74,7 +74,7 @@ export class Bingo {
         if (OnlyNoWin)
             BingoData = ThrowErrorIfFailed(await DB.Select("Bingos", [], { Winner: "" }))["Results"];
         else
-            BingoData = ThrowErrorIfFailed(await DB.Select("Bingos", []))["Results"];
+            BingoData = ThrowErrorIfFailed(await DB.Select("Bingos", [], { Winner: { Operator: "!=", Value: "" } }))["Results"];
         return new Result(true, "Got bingo list", { "BingoList": BingoData });
     }
     static DeleteBingo = async (DB: Database, BingoName: string): Promise<Result> => {
@@ -121,7 +121,7 @@ export class Bingo {
         if (BingoInfo.length === 0) return new Result(false, "Bingo not found");
         let BingoData = JSON.parse(BingoInfo[0]["BingoData"]);
         const IsOccupy = (Index: number): boolean => {
-            return BingoData[Index]["SubmitRecords"].length > 0 && BingoData[Index]["SubmitRecords"] == Username;
+            return BingoData[Index]["SubmitRecords"].length > 0 && BingoData[Index]["SubmitRecords"][0]["Username"] == Username;
         };
         if ((IsOccupy(0) && IsOccupy(5) && IsOccupy(10) && IsOccupy(15) && IsOccupy(20)) ||
             (IsOccupy(1) && IsOccupy(6) && IsOccupy(11) && IsOccupy(16) && IsOccupy(21)) ||

@@ -36,9 +36,12 @@ export class API {
             }));
             ThrowErrorIfFailed(await Users.CheckUsernameAndPassword(this.DB, this.APIParams["Username"], this.APIParams["Password"]));
             ThrowErrorIfFailed(await Users.UpdateOnlineTime(this.DB, this.APIParams["Username"]));
+            const UserPermission: number = ThrowErrorIfFailed(await Users.GetUser(this.DB, this.APIParams["Username"]))["Permission"];
+            if (UserPermission == 2) {
+                return new Result(false, "User banned");
+            }
             const TokenValue: string = ThrowErrorIfFailed(await Token.CreateToken(this.DB, this.APIParams["Username"]))["TokenValue"];
-            const IsAdmin: boolean = ThrowErrorIfFailed(await Users.GetUser(this.DB, this.APIParams["Username"]))["Permission"];
-            return new Result(true, "Login success", { Token: TokenValue, IsAdmin });
+            return new Result(true, "Login success", { Token: TokenValue, IsAdmin: UserPermission == 1 });
         },
         Logout: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
@@ -155,6 +158,8 @@ export class API {
         },
         BingoSubmitAll: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, { BingoName: "string", }));
+            if (ThrowErrorIfFailed(await Bingo.GetBingo(this.DB, this.APIParams["BingoName"]))["BingoInfo"]["Winner"] != "")
+                return new Result(false, "Bingo has winner");
             const LuoguCookies = ThrowErrorIfFailed(await Luogu.GetCookiesByUsername(this.DB, this.Auth["Username"]))["Cookies"];
             const BingoData = JSON.parse(ThrowErrorIfFailed(await Bingo.GetBingo(this.DB, this.APIParams["BingoName"]))["BingoInfo"]["BingoData"]);
             for (const i in BingoData) {
@@ -172,6 +177,8 @@ export class API {
                 BingoName: "string",
                 PID: "string",
             }));
+            if (ThrowErrorIfFailed(await Bingo.GetBingo(this.DB, this.APIParams["BingoName"]))["BingoInfo"]["Winner"] != "")
+                return new Result(false, "Bingo has winner");
             const LuoguCookies = ThrowErrorIfFailed(await Luogu.GetCookiesByUsername(this.DB, this.Auth["Username"]))["Cookies"];
             const LastACDetail = ThrowErrorIfFailed(await Luogu.GetLastACDetail(this.DB, LuoguCookies, this.Auth["Username"], this.APIParams["PID"]));
             ThrowErrorIfFailed(await Bingo.UpdateBingo(this.DB, this.APIParams["BingoName"], this.APIParams["PID"], LastACDetail));
@@ -190,6 +197,7 @@ export class API {
 
     public async Process(): Promise<object> {
         try {
+            // throw new Result(false, "System is under maintaining now");
             if (this.ProcessFunctions[this.APIName] === undefined) {
                 throw new Result(false, "The page you are trying to access does not exist");
             }

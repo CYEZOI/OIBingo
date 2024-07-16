@@ -1,3 +1,7 @@
+:root {
+    --inner-box-xxx: 0px;
+}
+
 .BlurDefault {
     filter: blur(5px);
     transition: 0.5s;
@@ -29,6 +33,16 @@
 
 .BingoItem:hover>.BingoItemInnerBox:nth-child(1) {
     opacity: 0;
+}
+
+.BingoItem>.BingoItemInnerBox:nth-child(2) {
+    margin-left: calc(-1 * var(--inner-box-xxx));
+    margin-top: calc(-1 * var(--inner-box-xxx));
+    width: calc(10rem + 2 * var(--inner-box-xxx));
+    height: calc(10rem + 2 * var(--inner-box-xxx));
+    z-index: 1;
+    border-radius: 2px;
+    box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.7);
 }
 
 .BingoItem>.BingoItemInnerBox:nth-child(2) {
