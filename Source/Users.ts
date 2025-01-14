@@ -25,7 +25,7 @@ export class Users {
         return new Result(true, "Got users", { UserInfo });
     }
     static AddUser = async (DB: Database, Username: string, Password: string): Promise<Result> => {
-        ThrowErrorIfFailed(await DB.Insert("Users", { Username, Password, LastOnlineTime: new Date().getTime() }));
+        ThrowErrorIfFailed(await DB.Insert("Users", { Username, Password, LastOnlineTime: new Date().getTime(), Color: "#" + (Math.random() * 0xffffff).toString(16).substr(0, 6), }));
         ThrowErrorIfFailed(await Luogu.GenerateNewCookies(DB, Username));
         return new Result(true, "User added");
     }
