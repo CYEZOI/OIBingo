@@ -34,16 +34,3 @@ SettingsSaveButton.addEventListener("click", () => {
 SettingsDiscardButton.addEventListener("click", () => {
     SwitchPage("Settings");
 });
-SettingsAvatar.addEventListener("blur", () => {
-    if (!SettingsAvatar.value.startsWith("https://image.langningchen.com")) {
-        ShowModal("Change avatar URL", "Are you sure you don't want to use the recommended image hosting service?", () => {
-            ShowModal("Change avatar URL", "We recommended you to use the https://image.langningchen.com image hosting! It's reliable and fast!", () => {
-                open("https://image.langningchen.com");
-                SettingsAvatar.value = "";
-            }, () => { })
-        }, () => {
-            open("https://image.langningchen.com");
-            SettingsAvatar.value = "";
-        });
-    }
-});
