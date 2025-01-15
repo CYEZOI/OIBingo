@@ -6,7 +6,13 @@ import { Result, ThrowErrorIfFailed } from "./Result";
 export class Bingo {
     static ImportBingo = async (DB: Database): Promise<Result> => {
         const BingoRestoreData = {
-            "CF": ["CF1009E", "CF1037F", "CF1045A", "CF1148F", "CF1155E", "CF1243B2", "CF1271F", "CF1280B", "CF1295D", "CF1422F", "CF1442B", "CF1491C", "CF1526E", "CF1592C", "CF1793E", "CF1808E2", "CF1896E", "CF1914F", "CF237C", "CF3B", "CF404C", "CF407C", "CF570B", "CF917B", "CF954E",],
+            "简单题": [
+                "P7915", "P1081", "P1973", "P1398", "P4954",
+                "P1196", "P1955", "P1966", "P3605", "P3960",
+                "P8518", "P4156", "P7739", "P2042", "P4391",
+                "P3435", "P4867", "P3203", "P7828", "P6272",
+                "P2611", "P8316", "P6326", "P4247", "P4092",
+            ]
         };
         for (const BingoName in BingoRestoreData) {
             const BingoData = BingoRestoreData[BingoName];

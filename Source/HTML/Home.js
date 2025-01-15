@@ -93,13 +93,17 @@ const UpdateBingo = () => {
             CardTitleDoneAllElement.disabled = Bingo["Winner"] != "";
             CardTitleDoneAllElement.addEventListener("click", () => {
                 AddLoading(CardTitleDoneAllElement);
-                RequestAPI("BingoSubmitAll", {
-                    BingoName: String(Bingo["BingoName"]),
+
+                RequestAPI("CheckLuoguLogin", {}, () => {
                 }, () => {
-                    RemoveLoading(CardTitleDoneAllElement);
-                }, () => {
-                    ShowSuccess("Bingo submitted");
-                    SwitchPage("Home");
+                    RequestAPI("BingoSubmitAll", {
+                        BingoName: String(Bingo["BingoName"]),
+                    }, () => {
+                        RemoveLoading(CardTitleDoneAllElement);
+                    }, () => {
+                        ShowSuccess("Bingo submitted");
+                        SwitchPage("Home");
+                    }, () => { }, () => { });
                 }, () => { }, () => { });
             });
             let CardTitleDeleteElement = document.createElement("button"); CardTitleElement.appendChild(CardTitleDeleteElement);
@@ -128,6 +132,7 @@ const UpdateBingo = () => {
                 for (let jy = 0; jy < 5; jy++) {
                     const Problem = Bingo["BingoData"][jx * 5 + jy]["Problem"];
                     const SubmitRecords = Bingo["BingoData"][jx * 5 + jy]["SubmitRecords"];
+                    SubmitRecords.sort((a, b) => { return a["Time"] - b["Time"]; });
                     let CardTableColumnElement = document.createElement("td"); CardTableRowElement.appendChild(CardTableColumnElement);
                     CardTableColumnElement.classList = "BingoItem text-center";
                     CardTableColumnElement.style.widows = "10rem";

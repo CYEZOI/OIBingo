@@ -157,6 +157,7 @@ export class API {
             return await Luogu.Login(this.DB, this.Auth["Username"], this.APIParams["Captcha"]);
         },
         BingoSubmitAll: async (): Promise<Result> => {
+            return new Result(false, "BingoSubmitAll banned");
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, { BingoName: "string", }));
             if (ThrowErrorIfFailed(await Bingo.GetBingo(this.DB, this.APIParams["BingoName"]))["BingoInfo"]["Winner"] != "")
                 return new Result(false, "Bingo has winner");
