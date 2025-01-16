@@ -131,17 +131,15 @@ export class API {
         },
         RefreshProblemList: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
-            return await Luogu.RefreshProblemList(this.DB);
+            return await Luogu.RefreshProblemList(this.DB, this.Auth["Username"]);
         },
         GetLuoguCaptcha: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
-            const LuoguCookies = ThrowErrorIfFailed(await Luogu.GetCookiesByUsername(this.DB, this.Auth["Username"]))["Cookies"];
-            return await Luogu.GetCaptcha(this.DB, LuoguCookies);
+            return await Luogu.GetCaptcha(this.DB, this.Auth["Username"]);
         },
         CheckLuoguLogin: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
-            const LuoguCookies = ThrowErrorIfFailed(await Luogu.GetCookiesByUsername(this.DB, this.Auth["Username"]))["Cookies"];
-            return await Luogu.CheckLogin(this.DB, LuoguCookies);
+            return await Luogu.CheckLogin(this.DB, this.Auth["Username"]);
         },
         ResetLuoguToken: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
@@ -157,15 +155,14 @@ export class API {
             return await Luogu.Login(this.DB, this.Auth["Username"], this.APIParams["Captcha"]);
         },
         BingoSubmitAll: async (): Promise<Result> => {
-            return new Result(false, "BingoSubmitAll banned");
+            // return new Result(false, "BingoSubmitAll banned");
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, { BingoName: "string", }));
             if (ThrowErrorIfFailed(await Bingo.GetBingo(this.DB, this.APIParams["BingoName"]))["BingoInfo"]["Winner"] != "")
                 return new Result(false, "Bingo has winner");
-            const LuoguCookies = ThrowErrorIfFailed(await Luogu.GetCookiesByUsername(this.DB, this.Auth["Username"]))["Cookies"];
             const BingoData = JSON.parse(ThrowErrorIfFailed(await Bingo.GetBingo(this.DB, this.APIParams["BingoName"]))["BingoInfo"]["BingoData"]);
             for (const i in BingoData) {
                 const PID = BingoData[i]["Problem"]["PID"];
-                const GetLastACDetailResult = await Luogu.GetLastACDetail(this.DB, LuoguCookies, this.Auth["Username"], PID);
+                const GetLastACDetailResult = await Luogu.GetLastACDetail(this.DB, this.Auth["Username"], PID);
                 if (GetLastACDetailResult.Success) {
                     ThrowErrorIfFailed(await Bingo.UpdateBingo(this.DB, this.APIParams["BingoName"], PID, GetLastACDetailResult.Data));
                 }
@@ -180,8 +177,7 @@ export class API {
             }));
             if (ThrowErrorIfFailed(await Bingo.GetBingo(this.DB, this.APIParams["BingoName"]))["BingoInfo"]["Winner"] != "")
                 return new Result(false, "Bingo has winner");
-            const LuoguCookies = ThrowErrorIfFailed(await Luogu.GetCookiesByUsername(this.DB, this.Auth["Username"]))["Cookies"];
-            const LastACDetail = ThrowErrorIfFailed(await Luogu.GetLastACDetail(this.DB, LuoguCookies, this.Auth["Username"], this.APIParams["PID"]));
+            const LastACDetail = ThrowErrorIfFailed(await Luogu.GetLastACDetail(this.DB, this.Auth["Username"], this.APIParams["PID"]));
             ThrowErrorIfFailed(await Bingo.UpdateBingo(this.DB, this.APIParams["BingoName"], this.APIParams["PID"], LastACDetail));
             ThrowErrorIfFailed(await Bingo.CheckWin(this.DB, this.APIParams["BingoName"], this.Auth["Username"]));
             return new Result(true, "Bingo submitted");

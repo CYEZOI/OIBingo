@@ -5,57 +5,85 @@ import { Result, ThrowErrorIfFailed } from "./Result";
 import * as base64js from "base64-js";
 
 export class Luogu {
-    static Fetch = async (URL: string, Options: RequestInit = {}): Promise<any> => {
+    static Fetch = async (DB: Database, Username: string, URL: string, Options: RequestInit = {}): Promise<any> => {
+        const cookies = (await DB.Select("Users", ["LuoguCookies",], { Username, })).Data["Results"][0]["LuoguCookies"];
+        if (Options.headers == null) Options.headers = {};
+        Options.headers["cookie"] = cookies;
         Options.redirect = "manual";
+
         const LuoguResponse = await fetch(URL, Options);
-        const ResponseText = await LuoguResponse.text();
-        var NewCookies = "";
-        if (LuoguResponse.headers.get("set-cookie") != null) {
-            const Cookies = LuoguResponse.headers.get("set-cookie")!.split(";");
-            for (let i = 0; i < Cookies.length; i++) {
-                if (Cookies[i].indexOf("C3VK") != -1) {
-                    NewCookies = Cookies[i].substring(Cookies[i].indexOf("C3VK") + 5, Cookies[i].indexOf("C3VK") + 5 + 6);
-                }
-            }
+        const ResponseArrayBuffer = await LuoguResponse.arrayBuffer();
+        const ResponseText = new TextDecoder().decode(ResponseArrayBuffer);
+
+        var NewCookies: Array<string> = [];
+        const SetCookie = LuoguResponse.headers.getSetCookie();
+        if (SetCookie) {
+            SetCookie.map((value: string) => {
+                NewCookies.push(value.split(";")[0]);
+            });
         }
         if (ResponseText.indexOf("C3VK") != -1) {
-            NewCookies = ResponseText.substring(ResponseText.indexOf("C3VK") + 5, ResponseText.indexOf("C3VK") + 5 + 6);
+            NewCookies.push("C3VK=" + ResponseText.substring(ResponseText.indexOf("C3VK") + 5, ResponseText.indexOf("C3VK") + 5 + 6));
         }
-        if (NewCookies) {
-            console.log("Trigger protection, token: " + NewCookies);
-            const OptionsNew = Options;
-            if (OptionsNew.headers == null) OptionsNew.headers = {};
-            OptionsNew.headers["cookie"] = (OptionsNew.headers["cookie"] ? OptionsNew.headers["cookie"] + "; " : "") + "C3VK=" + NewCookies;
-            return await Luogu.Fetch(URL, OptionsNew);
+
+        const OldCookies = (cookies ? cookies.split(";") : []);
+        const MergedCookies: Map<string, string> = new Map<string, string>();
+        OldCookies.map((value: string) => {
+            MergedCookies.set(value.split("=")[0], value.split("=")[1]);
+        });
+        NewCookies.map((value: string) => {
+            MergedCookies.set(value.split("=")[0], value.split("=")[1]);
+        });
+        let CookiesStringNew: string = "";
+        MergedCookies.forEach((value, key) => {
+            CookiesStringNew += key + "=" + value + ";";
+        });
+        CookiesStringNew = CookiesStringNew.substring(0, CookiesStringNew.length - 1);
+        if (CookiesStringNew !== cookies) {
+            console.log("Trigger protection", "old cookies", OldCookies, "new cookies", NewCookies, "merged cookies", MergedCookies);
         }
-        return await fetch(URL, Options);
+        ThrowErrorIfFailed(await DB.Update("Users", {
+            "LuoguCookies": CookiesStringNew,
+        }, { Username }));
+
+        if (ResponseText.indexOf("window.open") != -1 &&
+            ResponseText.indexOf("_self") != -1 &&
+            ResponseText.indexOf("C3VK") != -1) {
+            return await Luogu.Fetch(DB, Username, URL, Options);
+        }
+
+        return new Response(new ReadableStream({
+            start(controller) {
+                controller.enqueue(ResponseArrayBuffer);
+                controller.close();
+            }
+        }), {
+            status: LuoguResponse.status,
+            statusText: LuoguResponse.statusText,
+            headers: LuoguResponse.headers,
+        });
     };
 
     static GenerateNewCookies = async (DB: Database, Username: string): Promise<Result> => {
         ThrowErrorIfFailed(await DB.Update("Users", {
-            "LuoguCookies": (await this.Fetch("https://www.luogu.com.cn/")).headers.getSetCookie().map((value: string) => {
-                return value.split(";")[0];
-            }).join(";")
+            "LuoguCookies": "",
         }, { Username }));
+        await this.Fetch(DB, Username, "https://www.luogu.com.cn/");
         return new Result(true, "Cookies set");
     }
-    static GetCookiesByUsername = async (DB: Database, Username: string): Promise<Result> => {
-        const UserInfo = ThrowErrorIfFailed(await DB.Select("Users", ["LuoguCookies",], { Username, }))["Results"];
-        if (UserInfo.length == 0) return new Result(false, "User not found");
-        return new Result(true, "Got cookies", { Cookies: UserInfo[0]["LuoguCookies"] });
-    }
-    static CheckLogin = async (DB: Database, Cookies: string): Promise<Result> => {
-        if ((await this.Fetch("https://www.luogu.com.cn/chat?_contentOnly=1", {
-            headers: { cookie: Cookies, }
-        }).then(ResponseData => ResponseData.status)) == 200) {
+    static CheckLogin = async (DB: Database, Username: string): Promise<Result> => {
+        if ((await this.Fetch(DB, Username, "https://www.luogu.com.cn/chat?_contentOnly=1", {})
+            .then(ResponseData => {
+                const location = ResponseData.headers.get("location");
+                return !location || location.indexOf("login") == -1;
+            }))) {
             return new Result(true, "Luogu logged in");
         }
         return new Result(false, "Luogu not logged in");
     }
-    static GetCaptcha = async (DB: Database, Cookies: string): Promise<Result> => {
-        const CaptchaArrayBuffer: ArrayBuffer = await this.Fetch("https://www.luogu.com.cn/lg4/captcha", {
-            headers: { cookie: Cookies, },
-        }).then(ResponseData => ResponseData.arrayBuffer());
+    static GetCaptcha = async (DB: Database, Username: string): Promise<Result> => {
+        const CaptchaArrayBuffer: ArrayBuffer = await this.Fetch(DB, Username, "https://www.luogu.com.cn/lg4/captcha")
+            .then(ResponseData => ResponseData.arrayBuffer());
         const CaptchaBase64 = "data:image/jpeg;base64," + base64js.fromByteArray(new Uint8Array(CaptchaArrayBuffer));
         return new Result(true, "Got captcha", { CaptchaBase64 });
     }
@@ -64,13 +92,10 @@ export class Luogu {
         if (UserInfo.length == 0) return new Result(false, "User not found");
         const LuoguUsername: string = UserInfo[0]["LuoguUsername"];
         const LuoguPassword: string = UserInfo[0]["LuoguPassword"];
-        const LuoguCookies: string = ThrowErrorIfFailed(await this.GetCookiesByUsername(DB, Username))["Cookies"];
-        let LuoguUID: string = "";
-        const LoginResponseData = await this.Fetch("https://www.luogu.com.cn/do-auth/password", {
+        const LoginResponseData = await this.Fetch(DB, Username, "https://www.luogu.com.cn/do-auth/password", {
             "headers": {
                 "accept": "application/json",
                 "content-type": "application/json",
-                cookie: LuoguCookies,
             },
             "body": JSON.stringify({
                 "username": LuoguUsername,
@@ -79,10 +104,6 @@ export class Luogu {
             }),
             "method": "POST"
         }).then(ResponseData => {
-            if (ResponseData.headers.getSetCookie().length > 0) {
-                let CookieData = ResponseData.headers.getSetCookie()[0];
-                LuoguUID = CookieData.substring(5, CookieData.indexOf(";"));
-            }
             return ResponseData.json();
         });
         if (LoginResponseData["errorCode"] != null) {
@@ -91,19 +112,16 @@ export class Luogu {
         if (LoginResponseData["locked"] == true) {
             return new Result(true, "Account locked", { "Locked": true });
         }
-        ThrowErrorIfFailed(await DB.Update("Users", {
-            "LuoguCookies": LuoguCookies.substring(0, 58) + LuoguUID
-        }, { Username }));
         return new Result(true, "Logged in", { "Locked": false });
     }
     static GetProblemList = async (DB: Database, Difficulty: Number): Promise<Result> => {
         let ProblemList = ThrowErrorIfFailed(await DB.Select("LuoguProblems", [], { Difficulty }))["Results"];
         return new Result(true, "Got problem list", { ProblemList });
     }
-    static RefreshProblemList = async (DB: Database): Promise<Result> => {
+    static RefreshProblemList = async (DB: Database, Username: string): Promise<Result> => {
         ThrowErrorIfFailed(await DB.Delete("LuoguProblems"));
 
-        let ProblemPages = ThrowErrorIfFailed(await this.Fetch("https://www.luogu.com.cn/problem/list?_contentOnly=1", {
+        let ProblemPages = ThrowErrorIfFailed(await this.Fetch(DB, Username, "https://www.luogu.com.cn/problem/list?_contentOnly=1", {
         }).then(ResponseData => ResponseData.json()).then(LuoguResponse => {
             if (LuoguResponse["code"] != 200)
                 return new Result(false, "Luogu get problem list failed with error: " + LuoguResponse["code"]);
@@ -124,18 +142,12 @@ export class Luogu {
                 if (TriedTimes > 10) {
                     throw new Result(false, "Get problem page " + Index + " failed more than 10 times");
                 }
-                const Timeout = new AbortController();
-                const LuoguResponse = await this.Fetch("https://www.luogu.com.cn/problem/list?page=" + (Index + 1) + "&_contentOnly=1", {
-                    signal: Timeout.signal,
-                }).then(ResponseData => ResponseData.json()).catch(e => {
+                const LuoguResponse = await this.Fetch(DB, Username, "https://www.luogu.com.cn/problem/list?page=" + (Index + 1) + "&_contentOnly=1").then(ResponseData => ResponseData.json()).catch(e => {
                     Output.Warn("Getting problem page " + Index + " triggered rate limit");
                     TryList.add({ "Index": Index, "TriedTimes": TriedTimes + 1 });
                     Finished++;
                     return;
                 });
-                setTimeout(() => {
-                    Timeout.abort();
-                }, 5000);
                 if (LuoguResponse["code"] != 200)
                     Output.Error("Luogu get problem list failed with error: " + LuoguResponse["code"]);
                 else
@@ -160,25 +172,17 @@ export class Luogu {
 
         return new Result(true, "Problem list refreshed, currently " + ProblemCount + " problems");
     }
-    static GetLastACDetail = async (DB: Database, Cookies: string, Username: string, PID: string): Promise<Result> => {
+    static GetLastACDetail = async (DB: Database, Username: string, PID: string): Promise<Result> => {
         const UserInfo: Array<any> = ThrowErrorIfFailed(await DB.Select("Users", ["LuoguUsername",], { Username, }))["Results"];
         if (UserInfo.length == 0) return new Result(false, "User not found");
         const LuoguUsername: string = UserInfo[0]["LuoguUsername"];
-        const Timeout = new AbortController();
-        const RecordListInfo: object = await this.Fetch(`https://www.luogu.com.cn/record/list?pid=${PID}&user=` + LuoguUsername + "&status=12&orderBy=0&page=1&_contentOnly=1", {
-            headers: { cookie: Cookies, },
-            signal: Timeout.signal
-        }).then(async (ResponseData) => {
+        const RecordListInfo: object = await this.Fetch(DB, Username, `https://www.luogu.com.cn/record/list?pid=${PID}&user=` + LuoguUsername + "&status=12&orderBy=0&page=1&_contentOnly=1").then(async (ResponseData) => {
             const htmlText = await ResponseData.text();
 
             return JSON.parse(htmlText);
         }).catch(e => {
             throw new Result(false, `Luogu request failed: ${e}`);
         });
-        setTimeout(() => {
-            Timeout.abort();
-            throw new Result(false, "Luogu request failed: Timeout");
-        }, 5000);
         if (RecordListInfo["code"] != 200) {
             return new Result(false, "Get last ac detail failed: " + RecordListInfo["currentData"]["errorMessage"]);
         }
