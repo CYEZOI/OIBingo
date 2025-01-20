@@ -40,15 +40,19 @@ export class Luogu {
         });
         CookiesStringNew = CookiesStringNew.substring(0, CookiesStringNew.length - 1);
         if (CookiesStringNew !== cookies) {
-            console.log("Trigger protection", "old cookies", OldCookies, "new cookies", NewCookies, "merged cookies", MergedCookies);
+            Output.Warn(`Trigger protection, 
+    old cookies: ${OldCookies}, 
+    new cookies: ${NewCookies}, 
+    merged cookies: ${CookiesStringNew}`);
         }
         ThrowErrorIfFailed(await DB.Update("Users", {
             "LuoguCookies": CookiesStringNew,
         }, { Username }));
 
-        if (ResponseText.indexOf("window.open") != -1 &&
+        if ((ResponseText.indexOf("window.open") != -1 &&
             ResponseText.indexOf("_self") != -1 &&
-            ResponseText.indexOf("C3VK") != -1) {
+            ResponseText.indexOf("C3VK") != -1) ||
+            LuoguResponse.status == 302) {
             return await Luogu.Fetch(DB, Username, URL, Options);
         }
 

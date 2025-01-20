@@ -231,7 +231,7 @@ export class API {
             if (!(ResponseData instanceof Result)) {
                 ResponseData = new Result(false, "Server error: " + String(ResponseData).split("\n")[0]);
             }
-            (ResponseData.Success ? Output.Debug : Output.Warn)("API response: " + ResponseData);
+            (ResponseData.Success ? Output.Debug : Output.Error)("API response: " + ResponseData);
             return ResponseData;
         }
     }
