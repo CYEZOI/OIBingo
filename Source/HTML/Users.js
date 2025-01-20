@@ -25,6 +25,7 @@ RequestAPI("GetUsers", {}, () => { }, (Response) => {
     UsersData.children[1].innerHTML = "";
     for (let i = 0; i < Response.UserInfo.length; i++) {
         let DataRow = document.createElement("tr"); UsersData.children[1].appendChild(DataRow);
+        if (Response.UserInfo[i].Permission === 2) { DataRow.classList.add("table-danger"); }
         {
             let DataRowPermissionCheck;
             let DataRowUsername = document.createElement("td"); DataRow.appendChild(DataRowUsername);
@@ -40,7 +41,7 @@ RequestAPI("GetUsers", {}, () => { }, (Response) => {
                 DataRowPermissionCheck = document.createElement("input"); DataRowPermissionDiv.appendChild(DataRowPermissionCheck);
                 DataRowPermissionCheck.type = "checkbox";
                 DataRowPermissionCheck.className = "form-check-input";
-                DataRowPermissionCheck.checked = Response.UserInfo[i].Permission;
+                DataRowPermissionCheck.checked = Response.UserInfo[i].Permission === 1;
                 DataRowPermissionCheck.id = "User" + i + "PermissionCheck";
                 let DataRowPermissionLabel = document.createElement("label"); DataRowPermissionDiv.append(DataRowPermissionLabel);
                 DataRowPermissionLabel.className = "form-check-label";
