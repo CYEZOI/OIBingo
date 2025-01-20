@@ -52,7 +52,8 @@ export class Luogu {
         if ((ResponseText.indexOf("window.open") != -1 &&
             ResponseText.indexOf("_self") != -1 &&
             ResponseText.indexOf("C3VK") != -1) ||
-            LuoguResponse.status == 302) {
+            (LuoguResponse.status == 302 &&
+                ResponseText.indexOf("/auth/login") == -1)) {
             return await Luogu.Fetch(DB, Username, URL, Options);
         }
 
@@ -123,9 +124,9 @@ export class Luogu {
         return new Result(true, "Got problem list", { ProblemList });
     }
     static RefreshProblemList = async (DB: Database, Username: string): Promise<Result> => {
-        ThrowErrorIfFailed(await DB.Delete("LuoguProblems"));
+        // ThrowErrorIfFailed(await DB.Delete("LuoguProblems"));
 
-        let ProblemPages = ThrowErrorIfFailed(await this.Fetch(DB, Username, "https://www.luogu.com.cn/problem/list?_contentOnly=1", {
+        let ProblemPages = ThrowErrorIfFailed(await this.Fetch(DB, Username, "https://www.luogu.com.cn/problem/list?type=AT&_contentOnly=1", {
         }).then(ResponseData => ResponseData.json()).then(LuoguResponse => {
             if (LuoguResponse["code"] != 200)
                 return new Result(false, "Luogu get problem list failed with error: " + LuoguResponse["code"]);
@@ -146,12 +147,13 @@ export class Luogu {
                 if (TriedTimes > 10) {
                     throw new Result(false, "Get problem page " + Index + " failed more than 10 times");
                 }
-                const LuoguResponse = await this.Fetch(DB, Username, "https://www.luogu.com.cn/problem/list?page=" + (Index + 1) + "&_contentOnly=1").then(ResponseData => ResponseData.json()).catch(e => {
+                const LuoguResponse = await this.Fetch(DB, Username, "https://www.luogu.com.cn/problem/list?type=AT&page=" + (Index + 1) + "&_contentOnly=1").then(ResponseData => ResponseData.json()).catch(e => {
                     Output.Warn("Getting problem page " + Index + " triggered rate limit");
                     TryList.add({ "Index": Index, "TriedTimes": TriedTimes + 1 });
                     Finished++;
                     return;
                 });
+                console.log("Got problem page " + Index);
                 if (LuoguResponse["code"] != 200)
                     Output.Error("Luogu get problem list failed with error: " + LuoguResponse["code"]);
                 else
@@ -168,10 +170,11 @@ export class Luogu {
                 Finished++;
             })(TryList.poll()!);
             WaitCounter++;
-            if (WaitCounter % 16 == 0) {
+            if (WaitCounter % 1 == 0) {
                 while (Finished != WaitCounter) await new Promise((resolve) => setTimeout(resolve, 10));
                 WaitCounter = 0, Finished = 0;
             }
+            await new Promise((resolve) => setTimeout(resolve, 3000));
         }
 
         return new Result(true, "Problem list refreshed, currently " + ProblemCount + " problems");
