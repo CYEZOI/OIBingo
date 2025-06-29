@@ -1,6 +1,5 @@
 import { API } from "./API";
 import { Database } from "./Database";
-import { HTML } from "./HTML";
 import { ThrowErrorIfFailed } from "./Result";
 import { Utilities } from "./Utilities";
 
@@ -17,16 +16,7 @@ export class Process {
         let PathName = new URL(this.RequestData.url).pathname;
         PathName = PathName === "/" ? "/index.html" : PathName;
         PathName = PathName.substring(1);
-        if (this.RequestData.method === "GET") {
-            let HTMLInstance = new HTML(PathName);
-            let ResponseData = HTMLInstance.Process();
-            return new Response(ResponseData["Data"], {
-                headers: {
-                    "content-type": ResponseData["ContentType"] + ";charset=UTF-8"
-                }
-            });
-        }
-        else if (this.RequestData.method === "POST") {
+        if (this.RequestData.method === "POST") {
             if (PathName != "API") {
                 return new Response("Not found", {
                     status: 404

@@ -1,10 +1,7 @@
 name = "oi-bingo"
 main = "Source/index.ts"
 compatibility_date = "2023-12-06"
-env = { }
-rules = [
-  { type = "Data", globs = ["./HTML/*.*"], fallthrough = false }
-]
+assets = { directory = "./public" }
 
 [placement]
 mode = "smart"

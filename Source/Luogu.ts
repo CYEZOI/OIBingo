@@ -124,9 +124,9 @@ export class Luogu {
         return new Result(true, "Got problem list", { ProblemList });
     }
     static RefreshProblemList = async (DB: Database, Username: string): Promise<Result> => {
-        // ThrowErrorIfFailed(await DB.Delete("LuoguProblems"));
+        ThrowErrorIfFailed(await DB.Delete("LuoguProblems"));
 
-        let ProblemPages = ThrowErrorIfFailed(await this.Fetch(DB, Username, "https://www.luogu.com.cn/problem/list?type=AT&_contentOnly=1", {
+        let ProblemPages = ThrowErrorIfFailed(await this.Fetch(DB, Username, "https://www.luogu.com.cn/problem/list?type=P&_contentOnly=1", {
         }).then(ResponseData => ResponseData.json()).then(LuoguResponse => {
             if (LuoguResponse["code"] != 200)
                 return new Result(false, "Luogu get problem list failed with error: " + LuoguResponse["code"]);
@@ -147,13 +147,13 @@ export class Luogu {
                 if (TriedTimes > 10) {
                     throw new Result(false, "Get problem page " + Index + " failed more than 10 times");
                 }
-                const LuoguResponse = await this.Fetch(DB, Username, "https://www.luogu.com.cn/problem/list?type=AT&page=" + (Index + 1) + "&_contentOnly=1").then(ResponseData => ResponseData.json()).catch(e => {
+                const LuoguResponse = await this.Fetch(DB, Username, "https://www.luogu.com.cn/problem/list?type=P&page=" + (Index + 1) + "&_contentOnly=1").then(ResponseData => ResponseData.json()).catch(e => {
                     Output.Warn("Getting problem page " + Index + " triggered rate limit");
                     TryList.add({ "Index": Index, "TriedTimes": TriedTimes + 1 });
                     Finished++;
                     return;
                 });
-                console.log("Got problem page " + Index);
+                console.log("Got problem page " + Index + " of " + ProblemPages);
                 if (LuoguResponse["code"] != 200)
                     Output.Error("Luogu get problem list failed with error: " + LuoguResponse["code"]);
                 else
@@ -174,7 +174,6 @@ export class Luogu {
                 while (Finished != WaitCounter) await new Promise((resolve) => setTimeout(resolve, 10));
                 WaitCounter = 0, Finished = 0;
             }
-            await new Promise((resolve) => setTimeout(resolve, 3000));
         }
 
         return new Result(true, "Problem list refreshed, currently " + ProblemCount + " problems");
