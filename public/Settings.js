@@ -1,36 +1,37 @@
 const SettingsLuoguUsername = document.getElementById("SettingsLuoguUsername");
 const SettingsLuoguPassword = document.getElementById("SettingsLuoguPassword");
 const SettingsColor = document.getElementById("SettingsColor");
-const SettingsAvatar = document.getElementById("SettingsAvatar");
+const SettingsLuoguSaveButton = document.getElementById("SettingsLuoguSaveButton");
 const SettingsSaveButton = document.getElementById("SettingsSaveButton");
-const SettingsDiscardButton = document.getElementById("SettingsDiscardButton");
 AddLoading(SettingsLuoguUsername);
 AddLoading(SettingsLuoguPassword);
 AddLoading(SettingsColor);
-AddLoading(SettingsAvatar);
 RequestAPI("GetSettings", {}, () => { }, (SettingsData) => {
     RemoveLoading(SettingsLuoguUsername);
     RemoveLoading(SettingsLuoguPassword);
     RemoveLoading(SettingsColor);
-    RemoveLoading(SettingsAvatar);
     SettingsLuoguUsername.value = SettingsData["LuoguUsername"];
     SettingsLuoguPassword.value = SettingsData["LuoguPassword"];
     SettingsColor.value = SettingsData["Color"];
-    SettingsAvatar.value = SettingsData["Avatar"];
 }, () => { }, () => { });
+SettingsLuoguSaveButton.addEventListener("click", () => {
+    AddLoading(SettingsLuoguSaveButton);
+    RequestAPI("SetLuoguSettings", {
+        "LuoguUsername": SettingsLuoguUsername.value,
+        "LuoguPassword": SettingsLuoguPassword.value,
+    }, () => {
+        RemoveLoading(SettingsLuoguSaveButton);
+    }, () => {
+        ShowSuccess("Luogu settings saved");
+    }, () => { }, () => { });
+});
 SettingsSaveButton.addEventListener("click", () => {
     AddLoading(SettingsSaveButton);
     RequestAPI("SetSettings", {
-        "LuoguUsername": SettingsLuoguUsername.value,
-        "LuoguPassword": SettingsLuoguPassword.value,
         "Color": SettingsColor.value,
-        "Avatar": SettingsAvatar.value,
     }, () => {
         RemoveLoading(SettingsSaveButton);
     }, () => {
         ShowSuccess("Settings saved");
     }, () => { }, () => { });
-});
-SettingsDiscardButton.addEventListener("click", () => {
-    SwitchPage("Settings");
 });

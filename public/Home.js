@@ -93,17 +93,13 @@ const UpdateBingo = () => {
             CardTitleDoneAllElement.disabled = Bingo["Winner"] != "";
             CardTitleDoneAllElement.addEventListener("click", () => {
                 AddLoading(CardTitleDoneAllElement);
-
-                RequestAPI("CheckLuoguLogin", {}, () => {
+                RequestAPI("BingoSubmitAll", {
+                    BingoName: String(Bingo["BingoName"]),
                 }, () => {
-                    RequestAPI("BingoSubmitAll", {
-                        BingoName: String(Bingo["BingoName"]),
-                    }, () => {
-                        RemoveLoading(CardTitleDoneAllElement);
-                    }, () => {
-                        ShowSuccess("Bingo submitted");
-                        SwitchPage("Home");
-                    }, () => { }, () => { });
+                    RemoveLoading(CardTitleDoneAllElement);
+                }, () => {
+                    ShowSuccess("Bingo submitted");
+                    SwitchPage("Home");
                 }, () => { }, () => { });
             });
             let CardTitleDeleteElement = document.createElement("button"); CardTitleElement.appendChild(CardTitleDeleteElement);
@@ -207,49 +203,15 @@ const UpdateBingo = () => {
                             Submit.disabled = Bingo["Winner"] != "";
                             Submit.addEventListener("click", () => {
                                 AddLoading(Submit);
-                                RequestAPI("CheckLuoguLogin", {}, () => {
-                                }, () => {
-                                    RequestAPI("BingoSubmit", {
-                                        BingoName: String(Bingo["BingoName"]),
-                                        PID: String(Problem["PID"]),
-                                    }, () => {
-                                        RemoveLoading(Submit);
-                                    }, () => {
-                                        ShowSuccess("Bingo submitted");
-                                        SwitchPage("Home");
-                                    }, () => { }, () => { });
+                                RequestAPI("BingoSubmit", {
+                                    BingoName: String(Bingo["BingoName"]),
+                                    PID: String(Problem["PID"]),
                                 }, () => {
                                     RemoveLoading(Submit);
-                                    RequestAPI("GetLuoguCaptcha", {}, () => { }, (ResponseData) => {
-                                        MouseOverElement.innerHTML = "";
-                                        let CaptchaImage = document.createElement("img"); MouseOverElement.appendChild(CaptchaImage);
-                                        CaptchaImage.classList = "mb-2";
-                                        CaptchaImage.src = ResponseData["CaptchaBase64"];
-                                        CaptchaImage.addEventListener("click", () => {
-                                            RequestAPI("GetLuoguCaptcha", {}, () => { }, (ResponseData) => {
-                                                CaptchaImage.src = ResponseData["CaptchaBase64"];
-                                            }, () => { }, () => { });
-                                        });
-                                        let CaptchaInput = document.createElement("input"); MouseOverElement.appendChild(CaptchaInput);
-                                        CaptchaInput.classList = "form-control mb-2";
-                                        let CaptchaSubmit = document.createElement("button"); MouseOverElement.appendChild(CaptchaSubmit);
-                                        CaptchaSubmit.classList = "btn btn-sm btn-outline-success";
-                                        CaptchaSubmit.innerText = "Submit";
-                                        CaptchaSubmit.addEventListener("click", () => {
-                                            AddLoading(CaptchaSubmit);
-                                            RequestAPI("LuoguLogin", {
-                                                Captcha: String(CaptchaInput.value),
-                                            }, () => {
-                                                RemoveLoading(CaptchaSubmit);
-                                            }, () => {
-                                                ShowSuccess("Luogu login success, please resubmit");
-                                                SwitchPage("Home");
-                                            }, () => {
-                                                CaptchaImage.click();
-                                            }, () => { });
-                                        });
-                                    }, () => { }, () => { });
-                                }, () => { });
+                                }, () => {
+                                    ShowSuccess("Bingo submitted");
+                                    SwitchPage("Home");
+                                }, () => { }, () => { });
                             });
                         }
                     }

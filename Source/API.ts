@@ -58,14 +58,21 @@ export class API {
                 Avatar: UserInfo["Avatar"],
             });
         },
-        SetSettings: async (): Promise<Result> => {
+        SetLuoguSettings: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
                 LuoguUsername: "string",
                 LuoguPassword: "string",
-                Color: "string",
-                Avatar: "string",
             }));
-            return await Users.SetSettings(this.DB, this.Auth["Username"], this.APIParams["LuoguUsername"], this.APIParams["LuoguPassword"], this.APIParams["Color"], this.APIParams["Avatar"]);
+            ThrowErrorIfFailed(await Users.SetLuoguSettings(this.DB, this.Auth["Username"], this.APIParams["LuoguUsername"], this.APIParams["LuoguPassword"]));
+            ThrowErrorIfFailed(await Luogu.GenerateNewCookies(this.DB, this.Auth["Username"]));
+            ThrowErrorIfFailed(await Luogu.Login(this.DB, this.Auth["Username"]));
+            return await Luogu.UpdateAvatar(this.DB, this.Auth["Username"]);
+        },
+        SetSettings: async (): Promise<Result> => {
+            ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
+                Color: "string",
+            }));
+            return await Users.SetSettings(this.DB, this.Auth["Username"], this.APIParams["Color"]);
         },
         GetUsers: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
@@ -133,14 +140,6 @@ export class API {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
             return await Luogu.RefreshProblemList(this.DB, this.Auth["Username"]);
         },
-        GetLuoguCaptcha: async (): Promise<Result> => {
-            ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
-            return await Luogu.GetCaptcha(this.DB, this.Auth["Username"]);
-        },
-        CheckLuoguLogin: async (): Promise<Result> => {
-            ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));
-            return await Luogu.CheckLogin(this.DB, this.Auth["Username"]);
-        },
         ResetLuoguToken: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
                 "Username": "string",
@@ -148,14 +147,7 @@ export class API {
             ThrowErrorIfFailed(await Luogu.GenerateNewCookies(this.DB, this.APIParams["Username"]));
             return new Result(true, "Reset luogu token");
         },
-        LuoguLogin: async (): Promise<Result> => {
-            ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
-                Captcha: "string",
-            }));
-            return await Luogu.Login(this.DB, this.Auth["Username"], this.APIParams["Captcha"]);
-        },
         BingoSubmitAll: async (): Promise<Result> => {
-            // return new Result(false, "BingoSubmitAll banned");
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, { BingoName: "string", }));
             if (ThrowErrorIfFailed(await Bingo.GetBingo(this.DB, this.APIParams["BingoName"]))["BingoInfo"]["Winner"] != "")
                 return new Result(false, "Bingo has winner");

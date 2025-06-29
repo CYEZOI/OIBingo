@@ -16,8 +16,12 @@ export class Users {
         if (UserInfo.length === 0) return new Result(false, "User does not exists");
         return new Result(true, "Got user", UserInfo[0]);
     }
-    static SetSettings = async (DB: Database, Username: string, LuoguUsername: string, LuoguPassword: string, Color: string, Avatar: string): Promise<Result> => {
-        ThrowErrorIfFailed(await DB.Update("Users", { LuoguUsername, LuoguPassword, Color, Avatar, }, { Username, }))["Results"];
+    static SetLuoguSettings = async (DB: Database, Username: string, LuoguUsername: string, LuoguPassword: string): Promise<Result> => {
+        ThrowErrorIfFailed(await DB.Update("Users", { LuoguUsername, LuoguPassword, }, { Username, }))["Results"];
+        return new Result(true, "Set settings");
+    }
+    static SetSettings = async (DB: Database, Username: string, Color: string): Promise<Result> => {
+        ThrowErrorIfFailed(await DB.Update("Users", { Color, }, { Username, }))["Results"];
         return new Result(true, "Set settings");
     }
     static GetUsers = async (DB: Database): Promise<Result> => {

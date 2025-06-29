@@ -76,48 +76,73 @@ export class Luogu {
         await this.Fetch(DB, Username, "https://www.luogu.com.cn/");
         return new Result(true, "Cookies set");
     }
-    static CheckLogin = async (DB: Database, Username: string): Promise<Result> => {
-        if ((await this.Fetch(DB, Username, "https://www.luogu.com.cn/chat?_contentOnly=1", {})
-            .then(ResponseData => {
-                const location = ResponseData.headers.get("location");
-                return !location || location.indexOf("login") == -1;
-            }))) {
-            return new Result(true, "Luogu logged in");
-        }
-        return new Result(false, "Luogu not logged in");
-    }
-    static GetCaptcha = async (DB: Database, Username: string): Promise<Result> => {
-        const CaptchaArrayBuffer: ArrayBuffer = await this.Fetch(DB, Username, "https://www.luogu.com.cn/lg4/captcha")
-            .then(ResponseData => ResponseData.arrayBuffer());
-        const CaptchaBase64 = "data:image/jpeg;base64," + base64js.fromByteArray(new Uint8Array(CaptchaArrayBuffer));
-        return new Result(true, "Got captcha", { CaptchaBase64 });
-    }
-    static Login = async (DB: Database, Username: string, Captcha: string): Promise<Result> => {
+    static Login = async (DB: Database, Username: string): Promise<Result> => {
         const UserInfo = ThrowErrorIfFailed(await DB.Select("Users", ["LuoguUsername", "LuoguPassword",], { Username, }))["Results"];
         if (UserInfo.length == 0) return new Result(false, "User not found");
         const LuoguUsername: string = UserInfo[0]["LuoguUsername"];
         const LuoguPassword: string = UserInfo[0]["LuoguPassword"];
-        const LoginResponseData = await this.Fetch(DB, Username, "https://www.luogu.com.cn/do-auth/password", {
-            "headers": {
-                "accept": "application/json",
-                "content-type": "application/json",
-            },
-            "body": JSON.stringify({
-                "username": LuoguUsername,
-                "password": LuoguPassword,
-                "captcha": Captcha,
-            }),
-            "method": "POST"
-        }).then(ResponseData => {
-            return ResponseData.json();
-        });
-        if (LoginResponseData["errorCode"] != null) {
-            return new Result(false, "Login failed: " + LoginResponseData["errorMessage"]);
+
+        while (true) {
+            const CaptchaArrayBuffer: ArrayBuffer = await this.Fetch(DB, Username, "https://www.luogu.com.cn/lg4/captcha")
+                .then(ResponseData => ResponseData.arrayBuffer());
+            const Captcha = await fetch("http://localhost:8080", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    "image": base64js.fromByteArray(new Uint8Array(CaptchaArrayBuffer)),
+                }),
+            }).then(ResponseData => ResponseData.json()).then(ResponseData => {
+                if (ResponseData["prediction"] == null) {
+                    throw new Result(false, "Captcha prediction failed: " + ResponseData["error"]);
+                }
+                return ResponseData["prediction"];
+            }).catch(e => {
+                throw new Result(false, "Captcha prediction failed: " + e);
+            });
+
+            const LoginResponseData = await this.Fetch(DB, Username, "https://www.luogu.com.cn/do-auth/password", {
+                "headers": {
+                    "accept": "application/json",
+                    "content-type": "application/json",
+                },
+                "body": JSON.stringify({
+                    "username": LuoguUsername,
+                    "password": LuoguPassword,
+                    "captcha": Captcha,
+                }),
+                "method": "POST"
+            }).then(ResponseData => {
+                return ResponseData.json();
+            });
+            console.log(LoginResponseData);
+            if (LoginResponseData["errorCode"] != null) {
+                if (LoginResponseData["errorMessage"] != "图形验证码错误") {
+                    return new Result(false, "Login failed: " + LoginResponseData["errorMessage"]);
+                }
+            }
+            else if (LoginResponseData["locked"] == true) {
+                return new Result(true, "Account locked", { "Locked": true });
+            }
+            else {
+                return new Result(true, "Logged in", { "Locked": false });
+            }
         }
-        if (LoginResponseData["locked"] == true) {
-            return new Result(true, "Account locked", { "Locked": true });
+    }
+    static UpdateAvatar = async (DB: Database, Username: string): Promise<Result> => {
+        const UserInfo: Array<any> = ThrowErrorIfFailed(await DB.Select("Users", ["LuoguUsername",], { Username, }))["Results"];
+        if (UserInfo.length == 0) return new Result(false, "User not found");
+        const LuoguUsername: string = UserInfo[0]["LuoguUsername"];
+
+        const LuoguResponse = await this.Fetch(DB, Username, "https://www.luogu.com.cn/api/user/search?keyword=" + LuoguUsername);
+        const LuoguResponseData = await LuoguResponse.json();
+        if (LuoguResponseData["users"].length == 0) {
+            return new Result(false, "User not found");
         }
-        return new Result(true, "Logged in", { "Locked": false });
+        const Avatar: string = LuoguResponseData["users"][0]["avatar"];
+        ThrowErrorIfFailed(await DB.Update("Users", { Avatar, }, { Username, }))["Results"];
+        return new Result(true, "Avatar updated", { Avatar });
     }
     static GetProblemList = async (DB: Database, Difficulty: Number): Promise<Result> => {
         let ProblemList = ThrowErrorIfFailed(await DB.Select("LuoguProblems", [], { Difficulty }))["Results"];
