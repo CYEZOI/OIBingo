@@ -53,26 +53,19 @@ export class API {
             const UserInfo = ThrowErrorIfFailed(await Users.GetUser(this.DB, this.Auth["Username"]));
             return new Result(true, "Got settings", {
                 LuoguUsername: UserInfo["LuoguUsername"],
-                LuoguPassword: UserInfo["LuoguPassword"],
                 Color: UserInfo["Color"],
                 Avatar: UserInfo["Avatar"],
             });
         },
-        SetLuoguSettings: async (): Promise<Result> => {
+        SetSettings: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
                 LuoguUsername: "string",
                 LuoguPassword: "string",
             }));
-            ThrowErrorIfFailed(await Users.SetLuoguSettings(this.DB, this.Auth["Username"], this.APIParams["LuoguUsername"], this.APIParams["LuoguPassword"]));
+            ThrowErrorIfFailed(await Users.SetSettings(this.DB, this.Auth["Username"], this.APIParams["LuoguUsername"], this.APIParams["LuoguPassword"]));
             ThrowErrorIfFailed(await Luogu.GenerateNewCookies(this.DB, this.Auth["Username"]));
             ThrowErrorIfFailed(await Luogu.Login(this.DB, this.Auth["Username"]));
             return await Luogu.UpdateAvatar(this.DB, this.Auth["Username"]);
-        },
-        SetSettings: async (): Promise<Result> => {
-            ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {
-                Color: "string",
-            }));
-            return await Users.SetSettings(this.DB, this.Auth["Username"], this.APIParams["Color"]);
         },
         GetUsers: async (): Promise<Result> => {
             ThrowErrorIfFailed(Utilities.CheckParams(this.APIParams, {}));

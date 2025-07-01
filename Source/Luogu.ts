@@ -141,8 +141,28 @@ export class Luogu {
             return new Result(false, "User not found");
         }
         const Avatar: string = LuoguResponseData["users"][0]["avatar"];
-        ThrowErrorIfFailed(await DB.Update("Users", { Avatar, }, { Username, }))["Results"];
-        return new Result(true, "Avatar updated", { Avatar });
+        if (Avatar == null || Avatar == "") {
+            return new Result(false, "Avatar not found");
+        }
+        const AvatarResponse = await this.Fetch(DB, Username, Avatar, {
+            redirect: "follow",
+        });
+        if (AvatarResponse.status != 200) {
+            return new Result(false, "Avatar not found");
+        }
+
+        const data = new Uint8Array(await AvatarResponse.arrayBuffer());
+        let hash = 0;
+        for (let i = 0; i < Math.min(data.length, 1000); i++) {
+            hash = ((hash << 5) - hash + data[i]) & 0xffffffff;
+        }
+        const r = Math.max(50, Math.min(205, Math.abs((hash & 0xFF0000) >> 16)));
+        const g = Math.max(50, Math.min(205, Math.abs((hash & 0x00FF00) >> 8)));
+        const b = Math.max(50, Math.min(205, Math.abs(hash & 0x0000FF)));
+        const Color = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+
+        ThrowErrorIfFailed(await DB.Update("Users", { Avatar, Color }, { Username }))["Results"];
+        return new Result(true, "Avatar updated", { Avatar, Color });
     }
     static GetProblemList = async (DB: Database, Difficulty: Number): Promise<Result> => {
         let ProblemList = ThrowErrorIfFailed(await DB.Select("LuoguProblems", [], { Difficulty }))["Results"];

@@ -8,11 +8,12 @@
     "start": "wrangler dev"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240129.0",
-    "wrangler": "^3.0.0"
+    "@cloudflare/workers-types": "^4.20250701.0",
+    "wrangler": "^4.22.0"
   },
   "dependencies": {
     "base64-js": "^1.5.1",
+    "fast-average-color": "^9.5.0",
     "typescript-queue": "^1.0.2"
   }
 }
