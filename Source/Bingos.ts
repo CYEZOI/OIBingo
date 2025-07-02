@@ -1,6 +1,5 @@
 import { Database } from "./Database";
 import { Luogu } from "./Luogu";
-import { Output } from "./Output";
 import { Result, ThrowErrorIfFailed } from "./Result";
 
 export class Bingo {

@@ -11,6 +11,10 @@ export class Luogu {
         Options.headers["cookie"] = cookies;
         Options.redirect = "manual";
 
+        const abortController = new AbortController();
+        Options.signal = abortController.signal;
+        setTimeout(() => { abortController.abort() }, 3000);
+
         const LuoguResponse = await fetch(URL, Options);
         const ResponseArrayBuffer = await LuoguResponse.arrayBuffer();
         const ResponseText = new TextDecoder().decode(ResponseArrayBuffer);
@@ -130,6 +134,26 @@ export class Luogu {
             }
         }
     }
+
+    static hslToRgb(h: number, s: number, l: number): [number, number, number] {
+        h /= 360;
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        const hue2rgb = (t: number): number => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        };
+        return [
+            Math.round(hue2rgb(h + 1 / 3) * 255),
+            Math.round(hue2rgb(h) * 255),
+            Math.round(hue2rgb(h - 1 / 3) * 255)
+        ];
+    }
+
     static UpdateAvatar = async (DB: Database, Username: string): Promise<Result> => {
         const UserInfo: Array<any> = ThrowErrorIfFailed(await DB.Select("Users", ["LuoguUsername",], { Username, }))["Results"];
         if (UserInfo.length == 0) return new Result(false, "User not found");
@@ -152,13 +176,18 @@ export class Luogu {
         }
 
         const data = new Uint8Array(await AvatarResponse.arrayBuffer());
-        let hash = 0;
-        for (let i = 0; i < Math.min(data.length, 1000); i++) {
-            hash = ((hash << 5) - hash + data[i]) & 0xffffffff;
+
+        let hash = 2166136261;
+        for (let i = 0; i < data.length; i++) {
+            hash ^= data[i];
+            hash = (hash * 16777619) >>> 0;
         }
-        const r = Math.max(50, Math.min(205, Math.abs((hash & 0xFF0000) >> 16)));
-        const g = Math.max(50, Math.min(205, Math.abs((hash & 0x00FF00) >> 8)));
-        const b = Math.max(50, Math.min(205, Math.abs(hash & 0x0000FF)));
+
+        const hue = (hash & 0xFFFFFF) / 0xFFFFFF * 360;
+        const saturation = 0.65 + ((hash >>> 8) & 0xFF) / 0xFF * 0.25;
+        const lightness = 0.45 + ((hash >>> 16) & 0xFF) / 0xFF * 0.2;
+
+        const [r, g, b] = this.hslToRgb(hue, saturation, lightness);
         const Color = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 
         ThrowErrorIfFailed(await DB.Update("Users", { Avatar, Color }, { Username }))["Results"];
@@ -229,7 +258,6 @@ export class Luogu {
         const LuoguUsername: string = UserInfo[0]["LuoguUsername"];
         const RecordListInfo: object = await this.Fetch(DB, Username, `https://www.luogu.com.cn/record/list?pid=${PID}&user=` + LuoguUsername + "&status=12&orderBy=0&page=1&_contentOnly=1").then(async (ResponseData) => {
             const htmlText = await ResponseData.text();
-
             return JSON.parse(htmlText);
         }).catch(e => {
             throw new Result(false, `Luogu request failed: ${e}`);
