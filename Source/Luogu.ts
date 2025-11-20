@@ -89,7 +89,7 @@ export class Luogu {
         while (true) {
             const CaptchaArrayBuffer: ArrayBuffer = await this.Fetch(DB, Username, "https://www.luogu.com.cn/lg4/captcha")
                 .then(ResponseData => ResponseData.arrayBuffer());
-            const Captcha = await fetch("http://localhost:8080", {
+            const Captcha = await fetch("https://luogu.cyezoi.com", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
